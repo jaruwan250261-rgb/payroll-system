@@ -5,79 +5,112 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ระบบจัดการเงินเดือน - ออนไลน์</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500&display=swap" rel="stylesheet">
     <style>
         body { background-color: #f4f7f6; font-family: 'Kanit', sans-serif; }
-        .card { border-radius: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        .btn-custom { border-radius: 10px; }
+        .card { border-radius: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); border: none; }
+        .btn-custom { border-radius: 10px; font-weight: 500; }
+        .table-container { background: white; border-radius: 15px; padding: 20px; }
     </style>
 </head>
 <body class="container py-4">
-    <h2 class="text-center mb-4">ระบบบันทึกรายวัน & สรุปเงินเดือน</h2>
+    <h2 class="text-center mb-4">📊 ระบบบันทึกรายวัน & สรุปเงินเดือน</h2>
 
-    <div class="row g-3">
+    <div class="row g-4">
         <div class="col-md-5">
-            <div class="card p-3 mb-3">
-                <h5>บันทึก/แก้ไขข้อมูลพนักงาน</h5>
-                <div class="mb-2">
-                    <label>รหัสพนักงาน (ID):</label>
+            <div class="card p-4 mb-4">
+                <h5 class="mb-3">👤 ข้อมูลพนักงาน</h5>
+                <div class="mb-3">
+                    <label class="form-label">รหัสพนักงาน (ID):</label>
                     <input type="text" id="emp_id" class="form-control" placeholder="เช่น F01" onchange="checkEmployee()">
                 </div>
                 <div id="emp_details">
                     <input type="text" id="fullname" class="form-control mb-2" placeholder="ชื่อ-นามสกุล">
                     <input type="text" id="bank_account" class="form-control mb-2" placeholder="เลขบัญชี">
                     <input type="text" id="bank_name" class="form-control mb-2" placeholder="ธนาคาร">
-                    <button class="btn btn-primary w-100 btn-custom" onclick="saveEmployee()">บันทึกข้อมูลพนักงาน</button>
+                    <button class="btn btn-primary w-100 btn-custom" onclick="saveEmployee()">บันทึก/แก้ไขข้อมูลพนักงาน</button>
                 </div>
             </div>
 
-            <div class="card p-3">
-                <h5>บันทึกการทำงานรายวัน</h5>
+            <div class="card p-4">
+                <h5 class="mb-3">📝 บันทึกการทำงานรายวัน</h5>
+                <label class="form-label">วันที่:</label>
                 <input type="date" id="work_date" class="form-control mb-2">
+                
+                <label class="form-label">สาขา:</label>
                 <select id="branch" class="form-select mb-2">
                     <option value="บ้านเพื่อน">บ้านเพื่อน (Baan Puen)</option>
                     <option value="Close Friend">Close Friend</option>
                 </select>
-                <input type="text" id="position" class="form-control mb-2" placeholder="ตำแหน่ง">
+
+                <label class="form-label">ตำแหน่ง:</label>
+                <input type="text" id="position" class="form-control mb-2" placeholder="เช่น แคชเชียร์, เสิร์ฟ">
+                
                 <div class="row g-2 mb-2">
-                    <div class="col"><input type="number" id="daily_rate" class="form-control" placeholder="เรทรายวัน"></div>
-                    <div class="col"><input type="number" id="work_days" class="form-control" value="1" step="0.5"></div>
+                    <div class="col">
+                        <label class="small">เรทรายวัน:</label>
+                        <input type="number" id="daily_rate" class="form-control" placeholder="บาท">
+                    </div>
+                    <div class="col">
+                        <label class="small">จำนวนวัน:</label>
+                        <input type="number" id="work_days" class="form-control" value="1" step="0.5">
+                    </div>
                 </div>
+
                 <div class="row g-2 mb-2">
-                    <div class="col"><input type="number" id="commission" class="form-control" placeholder="ค่าคอม"></div>
-                    <div class="col"><input type="number" id="deduct_absent" class="form-control" placeholder="หักขาด/สาย"></div>
+                    <div class="col">
+                        <label class="small">ค่าคอม:</label>
+                        <input type="number" id="commission" class="form-control" value="0">
+                    </div>
+                    <div class="col">
+                        <label class="small">หักขาด/สาย:</label>
+                        <input type="number" id="deduct_absent" class="form-control" value="0">
+                    </div>
                 </div>
-                <input type="text" id="note" class="form-control mb-2" placeholder="หมายเหตุ">
-                <button class="btn btn-success w-100 btn-custom" onclick="saveDailyRecord()">บันทึกรายวัน</button>
+
+                <label class="form-label">หมายเหตุ:</label>
+                <input type="text" id="note" class="form-control mb-3" placeholder="-">
+                <button class="btn btn-success w-100 btn-custom" onclick="saveDailyRecord()">✅ บันทึกรายวันลงระบบ</button>
             </div>
         </div>
 
         <div class="col-md-7">
-            <div class="card p-3">
-                <h5>สรุปยอดจ่ายเงินเดือน</h5>
+            <div class="card p-4">
+                <h5 class="mb-3">💰 สรุปยอดจ่ายเงินเดือน</h5>
                 <div class="row g-2 mb-3">
-                    <div class="col"><input type="date" id="start_date" class="form-control"></div>
-                    <div class="col"><input type="date" id="end_date" class="form-control"></div>
-                    <div class="col">
+                    <div class="col-md-4">
+                        <label class="small">เริ่ม:</label>
+                        <input type="date" id="start_date" class="form-control">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="small">สิ้นสุด:</label>
+                        <input type="date" id="end_date" class="form-control">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="small">สาขา:</label>
                         <select id="filter_branch" class="form-select">
                             <option value="all">ทุกสาขา</option>
                             <option value="บ้านเพื่อน">บ้านเพื่อน</option>
                             <option value="Close Friend">Close Friend</option>
                         </select>
                     </div>
-                    <div class="col-auto"><button class="btn btn-info text-white" onclick="loadSummary()">ดึงข้อมูล</button></div>
                 </div>
+                <button class="btn btn-info text-white w-100 btn-custom mb-3" onclick="loadSummary()">🔍 ดึงข้อมูลสรุป</button>
+                
                 <div class="table-responsive">
-                    <table class="table table-hover mt-2">
-                        <thead>
+                    <table class="table table-hover">
+                        <thead class="table-light">
                             <tr>
-                                <th>ชื่อ</th>
+                                <th>ชื่อพนักงาน</th>
                                 <th>วัน</th>
                                 <th>คอม</th>
                                 <th>หัก</th>
-                                <th>ยอดสุทธิ</th>
+                                <th>สุทธิ</th>
                             </tr>
                         </thead>
-                        <tbody id="summary_table"></tbody>
+                        <tbody id="summary_table">
+                            <tr><td colspan="5" class="text-center text-muted">เลือกวันที่แล้วกดดึงข้อมูล</td></tr>
+                        </tbody>
                     </table>
                 </div>
             </div>
@@ -85,21 +118,22 @@
     </div>
 
     <script>
-        // ฟังก์ชันเช็คชื่อพนักงานอัตโนมัติ
+        // 1. เช็คพนักงานอัตโนมัติ
         async function checkEmployee() {
             const id = document.getElementById('emp_id').value;
             if (!id) return;
-            const res = await fetch(`/get-employee/${id}`); // 👈 แก้ให้เป็น URL ส่วนกลางแล้ว
-            const data = await res.json();
-            if (data.found) {
-                document.getElementById('fullname').value = data.fullname;
-                document.getElementById('bank_account').value = data.bank_account;
-                document.getElementById('bank_name').value = data.bank_name;
-                document.getElementById('daily_rate').value = data.daily_rate || "";
-            }
+            try {
+                const res = await fetch(`/get-employee/${id}`);
+                const data = await res.json();
+                if (data.found) {
+                    document.getElementById('fullname').value = data.fullname || "";
+                    document.getElementById('bank_account').value = data.bank_account || "";
+                    document.getElementById('bank_name').value = data.bank_name || "";
+                }
+            } catch (err) { console.error("Error checking employee"); }
         }
 
-        // บันทึกพนักงาน
+        // 2. บันทึกข้อมูลพนักงาน
         async function saveEmployee() {
             const data = {
                 emp_id: document.getElementById('emp_id').value,
@@ -107,7 +141,9 @@
                 bank_account: document.getElementById('bank_account').value,
                 bank_name: document.getElementById('bank_name').value
             };
-            const res = await fetch('/save-employee', { // 👈 แก้เป็น URL ส่วนกลาง
+            if(!data.emp_id || !data.fullname) return alert("กรุณาใส่รหัสและชื่อพนักงาน");
+
+            const res = await fetch('/save-employee', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(data)
@@ -115,7 +151,7 @@
             alert(await res.text());
         }
 
-        // บันทึกรายวัน
+        // 3. บันทึกรายวัน
         async function saveDailyRecord() {
             const data = {
                 emp_id: document.getElementById('emp_id').value,
@@ -128,7 +164,10 @@
                 deduct_absent: parseFloat(document.getElementById('deduct_absent').value) || 0,
                 note: document.getElementById('note').value
             };
-            const res = await fetch('/add-daily-record', { // 👈 แก้เป็น URL ส่วนกลาง
+            
+            if(!data.emp_id || !data.date) return alert("กรุณาระบุรหัสพนักงานและวันที่");
+
+            const res = await fetch('/add-daily-record', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(data)
@@ -136,27 +175,43 @@
             alert(await res.text());
         }
 
-        // ดึงสรุปยอด
+        // 4. ดึงข้อมูลสรุป
         async function loadSummary() {
             const start = document.getElementById('start_date').value;
             const end = document.getElementById('end_date').value;
             const branch = document.getElementById('filter_branch').value;
             
-            const res = await fetch(`/weekly-summary?start_date=${start}&end_date=${end}&branch=${branch}`); // 👈 แก้เป็น URL ส่วนกลาง
-            const data = await res.json();
-            
+            if(!start || !end) return alert("กรุณาเลือกช่วงวันที่");
+
             const tbody = document.getElementById('summary_table');
-            tbody.innerHTML = '';
-            data.forEach(item => {
-                const row = `<tr>
-                    <td>${item.fullname}<br><small class="text-muted">${item.bank_account} (${item.bank_name})</small></td>
-                    <td>${item.total_days}</td>
-                    <td>${item.total_comm}</td>
-                    <td>${item.d_absent + item.d_uniform}</td>
-                    <td class="fw-bold text-success">${item.net_income.toLocaleString()}</td>
-                </tr>`;
-                tbody.innerHTML += row;
-            });
+            tbody.innerHTML = '<tr><td colspan="5" class="text-center">กำลังโหลด...</td></tr>';
+
+            try {
+                const res = await fetch(`/weekly-summary?start_date=${start}&end_date=${end}&branch=${branch}`);
+                const data = await res.json();
+                
+                tbody.innerHTML = '';
+                if(data.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="5" class="text-center">ไม่พบข้อมูลในช่วงเวลาที่เลือก</td></tr>';
+                    return;
+                }
+
+                data.forEach(item => {
+                    const row = `<tr>
+                        <td>
+                            <strong>${item.fullname}</strong><br>
+                            <small class="text-muted">${item.bank_name}: ${item.bank_account}</small>
+                        </td>
+                        <td>${item.total_days}</td>
+                        <td class="text-success">+${item.total_comm.toLocaleString()}</td>
+                        <td class="text-danger">-${(item.d_absent + (item.d_uniform || 0)).toLocaleString()}</td>
+                        <td class="fw-bold text-primary">${item.net_income.toLocaleString()}</td>
+                    </tr>`;
+                    tbody.innerHTML += row;
+                });
+            } catch (err) {
+                tbody.innerHTML = '<tr><td colspan="5" class="text-center text-danger">เกิดข้อผิดพลาดในการดึงข้อมูล</td></tr>';
+            }
         }
     </script>
 </body>
