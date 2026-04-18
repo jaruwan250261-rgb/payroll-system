@@ -91,5 +91,16 @@ app.delete("/delete-record/:id", async (req, res) => {
   await supabase.from('daily_records').delete().eq('id', req.params.id);
   res.send("ลบข้อมูลสำเร็จ");
 });
-
+// เพิ่มส่วนนี้เข้าไปใน server.js เพื่อดึงรายชื่อพนักงานทั้งหมด
+app.get("/list-employees", async (req, res) => {
+  const { data, error } = await supabase
+    .from('employees')
+    .select('*')
+    .order('created_at', { ascending: false });
+  
+  if (error) {
+    return res.status(500).json([]);
+  }
+  res.json(data);
+});
 app.listen(3000, () => console.log("🚀 Server Online connected to Supabase"));
