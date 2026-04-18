@@ -1,238 +1,163 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <meta charset="UTF-8">
-  <title>ระบบจัดการเงินเดือน - Quiet Luxury Dark</title>
-  <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@200;300;400;500&display=swap" rel="stylesheet">
-  <style>
-    :root {
-      --bg: #121210;         /* Deep Charcoal */
-      --card: #1C1C1A;       /* Soft Black */
-      --accent: #C5A059;     /* Muted Champagne Gold */
-      --text-main: #E5E5E0;  /* Off White */
-      --text-sub: #8E8E88;   /* Warm Grey */
-      --border: #2D2D2A;
-      --input-bg: #242422;
-    }
-    body { font-family: 'Kanit', sans-serif; background: var(--bg); color: var(--text-main); padding: 40px 20px; line-height: 1.6; }
-    .container { max-width: 1350px; margin: auto; background: var(--card); padding: 40px; border-radius: 8px; border: 1px solid var(--border); box-shadow: 0 20px 50px rgba(0,0,0,0.5); }
-    
-    h2, h3 { font-weight: 300; letter-spacing: 1px; color: var(--accent); text-transform: uppercase; margin-bottom: 25px; }
-    
-    .tab-menu { display: flex; gap: 30px; margin-bottom: 40px; border-bottom: 1px solid var(--border); }
-    .tab-btn { background: none; border: none; padding: 15px 5px; color: var(--text-sub); cursor: pointer; font-size: 15px; transition: 0.3s; position: relative; font-family: 'Kanit', sans-serif; }
-    .tab-btn.active { color: var(--accent); }
-    .tab-btn.active::after { content: ''; position: absolute; bottom: -1px; left: 0; width: 100%; height: 2px; background: var(--accent); }
-
-    .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 25px; }
-    label { font-size: 12px; color: var(--accent); margin-bottom: 8px; display: block; opacity: 0.8; }
-    input, select { background: var(--input-bg); border: 1px solid var(--border); padding: 12px; border-radius: 4px; color: var(--text-main); width: 100%; box-sizing: border-box; transition: 0.3s; font-family: 'Kanit', sans-serif; }
-    input:focus { border-color: var(--accent); outline: none; background: #2A2A28; }
-
-    button { border: none; padding: 14px 25px; border-radius: 4px; cursor: pointer; font-family: 'Kanit', sans-serif; font-size: 14px; transition: 0.3s; }
-    .btn-save { background: var(--accent); color: #121210; width: 100%; font-weight: 500; }
-    .btn-save:hover { background: #D6B67A; transform: translateY(-1px); }
-    .btn-del { background: transparent; color: #ff6b6b; border: 1px solid #ff6b6b; font-size: 11px; padding: 5px 10px; }
-    .btn-del:hover { background: #ff6b6b; color: white; }
-    
-    .table-responsive { overflow-x: auto; margin-top: 20px; }
-    table { width: 100%; border-collapse: collapse; background: transparent; }
-    th { border-bottom: 1px solid var(--border); padding: 15px 10px; text-align: left; font-size: 12px; color: var(--accent); font-weight: 400; text-transform: uppercase; }
-    td { padding: 15px 10px; border-bottom: 1px solid #262624; font-size: 14px; color: #CCC; }
-    tr:hover td { color: var(--text-main); background: #222220; }
-    
-    .header-box { border: 1px solid var(--border); padding: 30px; text-align: center; margin-bottom: 30px; background: var(--input-bg); border-radius: 4px; }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ระบบจัดการเงินเดือน - ออนไลน์</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { background-color: #f4f7f6; font-family: 'Kanit', sans-serif; }
+        .card { border-radius: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .btn-custom { border-radius: 10px; }
+    </style>
 </head>
-<body>
+<body class="container py-4">
+    <h2 class="text-center mb-4">ระบบบันทึกรายวัน & สรุปเงินเดือน</h2>
 
-<div class="container">
-  <div class="tab-menu">
-    <button class="tab-btn active" onclick="switchTab('tab-employee', this)">01. ข้อมูลพนักงาน</button>
-    <button class="tab-btn" onclick="switchTab('tab-daily', this)">02. บันทึกงานรายวัน</button>
-    <button class="tab-btn" onclick="switchTab('tab-summary', this)">03. สรุปยอดเงิน</button>
-  </div>
+    <div class="row g-3">
+        <div class="col-md-5">
+            <div class="card p-3 mb-3">
+                <h5>บันทึก/แก้ไขข้อมูลพนักงาน</h5>
+                <div class="mb-2">
+                    <label>รหัสพนักงาน (ID):</label>
+                    <input type="text" id="emp_id" class="form-control" placeholder="เช่น F01" onchange="checkEmployee()">
+                </div>
+                <div id="emp_details">
+                    <input type="text" id="fullname" class="form-control mb-2" placeholder="ชื่อ-นามสกุล">
+                    <input type="text" id="bank_account" class="form-control mb-2" placeholder="เลขบัญชี">
+                    <input type="text" id="bank_name" class="form-control mb-2" placeholder="ธนาคาร">
+                    <button class="btn btn-primary w-100 btn-custom" onclick="saveEmployee()">บันทึกข้อมูลพนักงาน</button>
+                </div>
+            </div>
 
-  <div id="tab-employee" class="tab-content">
-    <h3>ลงทะเบียนพนักงาน</h3>
-    <div class="grid">
-      <div><label>รหัสพนักงาน</label><input type="text" id="emp_id"></div>
-      <div style="grid-column: span 2;"><label>ชื่อ-นามสกุล</label><input type="text" id="fullname"></div>
-      <div><label>ธนาคาร</label><input type="text" id="bank_name"></div>
-      <div><label>เลขบัญชีธนาคาร</label><input type="text" id="bank_acc"></div>
-      <div><label>เลขบัตรประชาชน</label><input type="text" id="id_card"></div>
-      <div style="grid-column: span 3;"><label>ที่อยู่ตามทะเบียนบ้าน</label><input type="text" id="address"></div>
+            <div class="card p-3">
+                <h5>บันทึกการทำงานรายวัน</h5>
+                <input type="date" id="work_date" class="form-control mb-2">
+                <select id="branch" class="form-select mb-2">
+                    <option value="บ้านเพื่อน">บ้านเพื่อน (Baan Puen)</option>
+                    <option value="Close Friend">Close Friend</option>
+                </select>
+                <input type="text" id="position" class="form-control mb-2" placeholder="ตำแหน่ง">
+                <div class="row g-2 mb-2">
+                    <div class="col"><input type="number" id="daily_rate" class="form-control" placeholder="เรทรายวัน"></div>
+                    <div class="col"><input type="number" id="work_days" class="form-control" value="1" step="0.5"></div>
+                </div>
+                <div class="row g-2 mb-2">
+                    <div class="col"><input type="number" id="commission" class="form-control" placeholder="ค่าคอม"></div>
+                    <div class="col"><input type="number" id="deduct_absent" class="form-control" placeholder="หักขาด/สาย"></div>
+                </div>
+                <input type="text" id="note" class="form-control mb-2" placeholder="หมายเหตุ">
+                <button class="btn btn-success w-100 btn-custom" onclick="saveDailyRecord()">บันทึกรายวัน</button>
+            </div>
+        </div>
+
+        <div class="col-md-7">
+            <div class="card p-3">
+                <h5>สรุปยอดจ่ายเงินเดือน</h5>
+                <div class="row g-2 mb-3">
+                    <div class="col"><input type="date" id="start_date" class="form-control"></div>
+                    <div class="col"><input type="date" id="end_date" class="form-control"></div>
+                    <div class="col">
+                        <select id="filter_branch" class="form-select">
+                            <option value="all">ทุกสาขา</option>
+                            <option value="บ้านเพื่อน">บ้านเพื่อน</option>
+                            <option value="Close Friend">Close Friend</option>
+                        </select>
+                    </div>
+                    <div class="col-auto"><button class="btn btn-info text-white" onclick="loadSummary()">ดึงข้อมูล</button></div>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover mt-2">
+                        <thead>
+                            <tr>
+                                <th>ชื่อ</th>
+                                <th>วัน</th>
+                                <th>คอม</th>
+                                <th>หัก</th>
+                                <th>ยอดสุทธิ</th>
+                            </tr>
+                        </thead>
+                        <tbody id="summary_table"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
     </div>
-    <button class="btn-save" onclick="saveEmployee()">บันทึกข้อมูลพนักงาน</button>
-    <div class="table-responsive">
-      <table>
-        <thead><tr><th>รหัส</th><th>ชื่อ-นามสกุล</th><th>ธนาคาร/เลขบัญชี</th><th>บัตรประชาชน</th></tr></thead>
-        <tbody id="emp_tbody"></tbody>
-      </table>
-    </div>
-  </div>
 
-  <div id="tab-daily" class="tab-content" style="display:none;">
-    <div class="header-box">
-      <h3>วันที่บันทึก: <input type="date" id="record_date" onchange="loadDaily()" style="width:auto; border:none; background:transparent; color:var(--accent); cursor:pointer;"></h3>
-    </div>
-    <div class="grid">
-      <div><label>รหัสพนักงาน</label><input type="text" id="daily_id" onblur="fetchName()"></div>
-      <div><label>ชื่อ (ดึงอัตโนมัติ)</label><input type="text" id="daily_name" disabled style="opacity: 0.6;"></div>
-      <div><label>ร้านที่ทำวันนี้</label>
-        <select id="daily_branch"><option>บ้านเพื่อนรัชโยธิน</option><option>Close Friend</option></select>
-      </div>
-      <div><label>ตำแหน่งงาน</label>
-        <select id="position">
-          <option>Reception / Ticket</option><option>All Area</option><option>บาร์น้ำ</option><option>บาร์เทนเดอร์</option>
-          <option>แคชเชียร์</option><option>บริการลูกค้า</option><option>เสิร์ฟร่วม</option><option>เด็กรับของ&ดูแลร้าน</option>
-          <option>แม่บ้าน</option><option>ล้างจาน</option><option>Technical</option><option>Influ</option>
-          <option>ออกของบาร์</option><option>ครัว</option><option value="other">อื่น ๆ (โปรดระบุ)</option>
-        </select>
-        <input type="text" id="pos_other" style="display:none; margin-top:10px;" placeholder="ระบุตำแหน่ง...">
-      </div>
-      <div><label>เรทรายวัน</label><input type="number" id="rate" value="0"></div>
-      <div><label>จำนวนวันทำงาน</label><input type="number" id="work_days" value="1" step="0.5"></div>
-      <div><label>ค่าคอมมิชชั่น</label><input type="number" id="comm" value="0"></div>
-      <div><label>ขาด/ลา/มาสาย (บาท)</label><input type="number" id="d_absent" value="0"></div>
-      <div><label>ค่าเสื้อสายคล้องคอ/อื่น ๆ</label><input type="number" id="d_uniform" value="0"></div>
-      <div><label>หมายเหตุ</label>
-        <select id="note_select"><option value="">ไม่มี</option><option>เด็กรับของ&ดูแลร้าน</option><option>ค่าเก็บอ้วก</option></select>
-      </div>
-    </div>
-    <button class="btn-save" onclick="saveDaily()">บันทึกรายการประจำวัน</button>
-    <div class="table-responsive">
-      <table>
-        <thead><tr><th>ร้าน</th><th>ตำแหน่ง</th><th>ชื่อ</th><th>เรท</th><th>ยอดหัก</th><th>ลบ</th></tr></thead>
-        <tbody id="daily_tbody"></tbody>
-      </table>
-    </div>
-  </div>
+    <script>
+        // ฟังก์ชันเช็คชื่อพนักงานอัตโนมัติ
+        async function checkEmployee() {
+            const id = document.getElementById('emp_id').value;
+            if (!id) return;
+            const res = await fetch(`/get-employee/${id}`); // 👈 แก้ให้เป็น URL ส่วนกลางแล้ว
+            const data = await res.json();
+            if (data.found) {
+                document.getElementById('fullname').value = data.fullname;
+                document.getElementById('bank_account').value = data.bank_account;
+                document.getElementById('bank_name').value = data.bank_name;
+                document.getElementById('daily_rate').value = data.daily_rate || "";
+            }
+        }
 
-  <div id="tab-summary" class="tab-content" style="display:none;">
-    <h3>สรุปยอดเงิน</h3>
-    <div class="header-box">
-      <div style="display:flex; gap:15px; justify-content:center; align-items:center; flex-wrap: wrap;">
-        <select id="sum_branch" style="width:200px;"><option value="all">ทุกร้าน</option><option>บ้านเพื่อนรัชโยธิน</option><option>Close Friend</option></select>
-        <input type="date" id="s_date" style="width:auto;"> <span style="color:var(--text-sub)">ถึง</span> <input type="date" id="e_date" style="width:auto;">
-        <button class="btn-save" style="width:auto; margin:0; padding:12px 30px;" onclick="loadSummary()">แสดงข้อมูลสรุป</button>
-        <button class="btn-save" style="width:auto; margin:0; padding:12px 30px; background:var(--text-sub); color:var(--bg);" onclick="exportCSV()">ดึงไฟล์ EXCEL</button>
-      </div>
-    </div>
-    <div class="table-responsive">
-      <table id="summary_table">
-        <thead>
-          <tr>
-            <th>No.</th><th>รหัส</th><th>ชื่อ-นามสกุล</th><th>วันทำ</th><th>วันละ</th><th>คอมฯ</th>
-            <th>ขาด/ลา</th><th>ค่าเสื้อ</th><th>รายได้รวม</th><th>ภาษี 3%</th><th>รายได้สุทธิ</th>
-            <th>เลขบัญชี</th><th>ธนาคาร</th><th>บัตร ปชช.</th><th>ที่อยู่</th>
-          </tr>
-        </thead>
-        <tbody id="summary_tbody"></tbody>
-      </table>
-    </div>
-  </div>
-</div>
+        // บันทึกพนักงาน
+        async function saveEmployee() {
+            const data = {
+                emp_id: document.getElementById('emp_id').value,
+                fullname: document.getElementById('fullname').value,
+                bank_account: document.getElementById('bank_account').value,
+                bank_name: document.getElementById('bank_name').value
+            };
+            const res = await fetch('/save-employee', { // 👈 แก้เป็น URL ส่วนกลาง
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+            alert(await res.text());
+        }
 
-<script>
-  function switchTab(id, btn) {
-    document.querySelectorAll('.tab-content').forEach(t => t.style.display = 'none');
-    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-    document.getElementById(id).style.display = 'block';
-    btn.classList.add('active');
-    if(id === 'tab-employee') loadEmployees();
-    if(id === 'tab-daily') { document.getElementById('record_date').valueAsDate = new Date(); loadDaily(); }
-  }
+        // บันทึกรายวัน
+        async function saveDailyRecord() {
+            const data = {
+                emp_id: document.getElementById('emp_id').value,
+                date: document.getElementById('work_date').value,
+                branch: document.getElementById('branch').value,
+                position: document.getElementById('position').value,
+                daily_rate: parseFloat(document.getElementById('daily_rate').value) || 0,
+                work_days: parseFloat(document.getElementById('work_days').value) || 0,
+                commission: parseFloat(document.getElementById('commission').value) || 0,
+                deduct_absent: parseFloat(document.getElementById('deduct_absent').value) || 0,
+                note: document.getElementById('note').value
+            };
+            const res = await fetch('/add-daily-record', { // 👈 แก้เป็น URL ส่วนกลาง
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+            alert(await res.text());
+        }
 
-  document.getElementById('position').addEventListener('change', function() {
-    document.getElementById('pos_other').style.display = (this.value === 'other') ? 'block' : 'none';
-  });
-
-  function fetchName() {
-    const id = document.getElementById('daily_id').value;
-    if(!id) return;
-    fetch('/get-employee/'+id).then(res=>res.json()).then(data => {
-      document.getElementById('daily_name').value = data.found ? data.fullname : "ไม่พบรหัสพนักงาน";
-    });
-  }
-
-  function saveEmployee() {
-    const p = {
-      emp_id: document.getElementById('emp_id').value,
-      fullname: document.getElementById('fullname').value,
-      bank_name: document.getElementById('bank_name').value,
-      bank_account: document.getElementById('bank_acc').value,
-      id_card: document.getElementById('id_card').value,
-      address: document.getElementById('address').value
-    };
-    if(!p.emp_id || !p.fullname) return alert("กรุณาระบุรหัสและชื่อ");
-    fetch('/save-employee', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(p) }).then(() => { loadEmployees(); alert("บันทึกข้อมูลเรียบร้อย"); });
-  }
-
-  function loadEmployees() {
-    fetch('/list-employees').then(res=>res.json()).then(data => {
-      const b = document.getElementById('emp_tbody'); b.innerHTML = '';
-      data.forEach(r => b.innerHTML += `<tr><td>${r.emp_id}</td><td>${r.fullname}</td><td>${r.bank_name} ${r.bank_account}</td><td>${r.id_card}</td></tr>`);
-    });
-  }
-
-  function saveDaily() {
-    const pos = document.getElementById('position').value === 'other' ? document.getElementById('pos_other').value : document.getElementById('position').value;
-    const p = {
-      date: document.getElementById('record_date').value,
-      emp_id: document.getElementById('daily_id').value,
-      branch: document.getElementById('daily_branch').value,
-      position: pos,
-      work_days: parseFloat(document.getElementById('work_days').value),
-      daily_rate: parseFloat(document.getElementById('rate').value),
-      commission: parseFloat(document.getElementById('comm').value),
-      deduct_absent: parseFloat(document.getElementById('d_absent').value),
-      deduct_uniform: parseFloat(document.getElementById('d_uniform').value),
-      note: document.getElementById('note_select').value
-    };
-    if(!p.emp_id) return alert("ระบุรหัสพนักงาน");
-    fetch('/add-daily-record', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(p) }).then(() => { loadDaily(); alert("บันทึกงานรายวันสำเร็จ"); });
-  }
-
-  function loadDaily() {
-    fetch('/records-by-date/'+document.getElementById('record_date').value).then(res=>res.json()).then(data => {
-      const b = document.getElementById('daily_tbody'); b.innerHTML = '';
-      data.forEach(r => b.innerHTML += `<tr><td>${r.branch}</td><td>${r.position}</td><td>${r.fullname}</td><td>${r.daily_rate}</td><td>${r.total_deduct}</td><td><button class="btn-del" onclick="del(${r.id})">ลบ</button></td></tr>`);
-    });
-  }
-
-  function del(id) { if(confirm("ต้องการลบรายการนี้ใช่หรือไม่?")) fetch('/delete-record/'+id,{method:'DELETE'}).then(()=>loadDaily()); }
-
-  function loadSummary() {
-    const s = document.getElementById('s_date').value, e = document.getElementById('e_date').value, br = document.getElementById('sum_branch').value;
-    if(!s || !e) return alert("เลือกช่วงวันที่");
-    fetch(`/weekly-summary?start_date=${s}&end_date=${e}&branch=${br}`).then(res=>res.json()).then(data => {
-      const b = document.getElementById('summary_tbody'); b.innerHTML = '';
-      data.forEach((r, i) => {
-        b.innerHTML += `<tr>
-          <td>${i+1}</td><td>${r.emp_id}</td><td>${r.fullname}</td><td>${r.total_days}</td><td>${r.daily_rate}</td><td>${r.total_comm}</td>
-          <td>${r.deduct_absent}</td><td>${r.deduct_uniform}</td><td style="color:var(--accent)">${r.total_income.toLocaleString()}</td>
-          <td style="color:#ff6b6b">${r.tax.toLocaleString()}</td><td style="font-weight:500; color:#4CAF50">${r.net_income.toLocaleString()}</td>
-          <td>${r.bank_account}</td><td>${r.bank_name}</td><td>${r.id_card}</td><td>${r.address}</td>
-        </tr>`;
-      });
-    });
-  }
-
-  function exportCSV() {
-    const table = document.getElementById("summary_table");
-    let csv = ["\ufeff"];
-    for(let row of table.rows) {
-      let r = [];
-      for(let col of row.cells) r.push('"' + col.innerText.replace(/,/g,'') + '"');
-      csv.push(r.join(","));
-    }
-    const blob = new Blob([csv.join("\n")], {type:'text/csv'});
-    const a = document.createElement("a");
-    a.href = URL.createObjectURL(blob);
-    a.download = "สรุปยอดเงิน.csv";
-    a.click();
-  }
-</script>
+        // ดึงสรุปยอด
+        async function loadSummary() {
+            const start = document.getElementById('start_date').value;
+            const end = document.getElementById('end_date').value;
+            const branch = document.getElementById('filter_branch').value;
+            
+            const res = await fetch(`/weekly-summary?start_date=${start}&end_date=${end}&branch=${branch}`); // 👈 แก้เป็น URL ส่วนกลาง
+            const data = await res.json();
+            
+            const tbody = document.getElementById('summary_table');
+            tbody.innerHTML = '';
+            data.forEach(item => {
+                const row = `<tr>
+                    <td>${item.fullname}<br><small class="text-muted">${item.bank_account} (${item.bank_name})</small></td>
+                    <td>${item.total_days}</td>
+                    <td>${item.total_comm}</td>
+                    <td>${item.d_absent + item.d_uniform}</td>
+                    <td class="fw-bold text-success">${item.net_income.toLocaleString()}</td>
+                </tr>`;
+                tbody.innerHTML += row;
+            });
+        }
+    </script>
 </body>
 </html>
