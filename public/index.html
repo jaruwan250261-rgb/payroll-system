@@ -26,16 +26,15 @@
     input, select { background: var(--input-bg); border: 1px solid var(--border); padding: 12px; border-radius: 6px; color: var(--text-main); width: 100%; box-sizing: border-box; font-family: 'Kanit', sans-serif; font-size: 15px; }
     button { border: none; padding: 16px 30px; border-radius: 6px; cursor: pointer; font-family: 'Kanit', sans-serif; font-size: 16px; transition: 0.3s; }
     .btn-save { background: var(--accent); color: #121210; width: 100%; font-weight: 500; }
+    .btn-edit { background: transparent; color: var(--accent); border: 1px solid var(--accent); font-size: 12px; padding: 5px 10px; border-radius: 4px; margin-right: 5px; }
+    .btn-edit:hover { background: var(--accent); color: #121210; }
     .btn-del { background: transparent; color: #ff6b6b; border: 1px solid #ff6b6b; font-size: 12px; padding: 5px 10px; border-radius: 4px; }
+    .btn-del:hover { background: #ff6b6b; color: white; }
     .table-responsive { overflow-x: auto; margin-top: 30px; border-radius: 8px; border: 1px solid var(--border); }
     table { width: 100%; border-collapse: collapse; white-space: nowrap; }
     th { border-bottom: 1px solid var(--border); padding: 15px 12px; text-align: left; font-size: 14px; color: var(--accent); font-weight: 400; background: rgba(197, 160, 89, 0.05); }
     td { padding: 15px 12px; border-bottom: 1px solid #262624; font-size: 14px; color: #CCC; }
-    
-    /* คลาสสำหรับการจัดกึ่งกลางข้อมูลตัวเลข */
     .text-center { text-align: center !important; }
-    th.text-center { text-align: center !important; }
-
     tr:hover td { color: var(--text-main); background: #222220; }
     .header-box { border: 1px solid var(--border); padding: 30px; text-align: center; margin-bottom: 30px; background: var(--input-bg); border-radius: 8px; }
   </style>
@@ -66,11 +65,12 @@
       <div><label>เลขบัตรประชาชน</label><input type="text" id="id_card"></div>
       <div style="grid-column: span 3;"><label>ที่อยู่ตามทะเบียนบ้าน</label><input type="text" id="address"></div>
     </div>
-    <button class="btn-save" onclick="saveEmployee()">บันทึกข้อมูลพนักงาน</button>
+    <button class="btn-save" id="btn_save_emp" onclick="saveEmployee()">บันทึกข้อมูลพนักงาน</button>
+    
     <div class="table-responsive">
       <table>
         <thead>
-          <tr><th>รหัส</th><th>ชื่อ-นามสกุล</th><th>ธนาคาร</th><th>เลขบัญชี</th><th>บัตรประชาชน</th><th>ที่อยู่ตามทะเบียนบ้าน</th></tr>
+          <tr><th>รหัส</th><th>ชื่อ-นามสกุล</th><th>ธนาคาร</th><th>เลขบัญชี</th><th>บัตรประชาชน</th><th>ที่อยู่</th><th>จัดการ</th></tr>
         </thead>
         <tbody id="emp_tbody"></tbody>
       </table>
@@ -126,14 +126,9 @@
         <thead>
           <tr>
             <th>No.</th><th>รหัส</th><th>ชื่อ-นามสกุล</th>
-            <th class="text-center">วันทำ</th>
-            <th class="text-center">วันละ</th>
-            <th class="text-center">ค่าคอมมิชชั่น</th>
-            <th class="text-center">หักมาสาย</th>
-            <th class="text-center">หักค่าเสื้อ</th>
-            <th class="text-center">รายได้รวม</th>
-            <th class="text-center">หักภาษี 3%</th>
-            <th class="text-center">รายได้สุทธิ</th>
+            <th class="text-center">วันทำ</th><th class="text-center">วันละ</th><th class="text-center">ค่าคอมฯ</th>
+            <th class="text-center">หักมาสาย</th><th class="text-center">หักค่าเสื้อ</th><th class="text-center">รายได้รวม</th>
+            <th class="text-center">หักภาษี 3%</th><th class="text-center">รายได้สุทธิ</th>
             <th>เลขบัญชี</th><th>ธนาคาร</th><th>บัตรประชาชน</th><th>ที่อยู่</th>
           </tr>
         </thead>
@@ -144,6 +139,8 @@
 </div>
 
 <script>
+  let employeesData = []; // เก็บข้อมูลพนักงานไว้ใช้งานในเครื่อง
+
   function switchTab(id, btn) {
     document.querySelectorAll('.tab-content').forEach(t => t.style.display = 'none');
     document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
@@ -153,14 +150,7 @@
     if(id === 'tab-daily') { if(!document.getElementById('record_date').value) document.getElementById('record_date').valueAsDate = new Date(); loadDaily(); }
   }
 
-  function fetchName() {
-    const id = document.getElementById('daily_id').value;
-    if(!id) return;
-    fetch('/get-employee/'+id).then(res=>res.json()).then(data => {
-      document.getElementById('daily_name').value = data.found ? data.fullname : "ไม่พบรหัส";
-    });
-  }
-
+  // 1. & 2. จัดการข้อมูลพนักงาน (ลบ/แก้ไข/รีเซ็ต)
   function saveEmployee() {
     const p = {
       emp_id: document.getElementById('emp_id').value,
@@ -171,17 +161,81 @@
       address: document.getElementById('address').value
     };
     if(!p.emp_id || !p.fullname) return alert("กรุณาระบุรหัสและชื่อ");
-    fetch('/save-employee', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(p) }).then(() => { 
-      loadEmployees(); alert("บันทึกเรียบร้อย"); 
-      document.getElementById('emp_id').value = ""; document.getElementById('fullname').value = "";
+
+    fetch('/save-employee', { 
+      method:'POST', 
+      headers:{'Content-Type':'application/json'}, 
+      body:JSON.stringify(p) 
+    }).then(() => { 
+      alert("บันทึกข้อมูลเรียบร้อย"); 
+      resetEmpForm(); // รีเซ็ตฟอร์มหลังบันทึก
+      loadEmployees(); 
     });
+  }
+
+  function resetEmpForm() {
+    document.getElementById('emp_id').value = "";
+    document.getElementById('fullname').value = "";
+    document.getElementById('bank_acc').value = "";
+    document.getElementById('id_card').value = "";
+    document.getElementById('address').value = "";
+    document.getElementById('bank_name').value = "กสิกรไทย";
+    document.getElementById('emp_id').disabled = false; // ปลดล็อกช่องรหัสถ้าเคยโดนล็อกตอนแก้ไข
   }
 
   function loadEmployees() {
     fetch('/list-employees').then(res=>res.json()).then(data => {
+      employeesData = data;
       data.sort((a, b) => a.emp_id.localeCompare(b.emp_id, undefined, {numeric: true}));
       const b = document.getElementById('emp_tbody'); b.innerHTML = '';
-      data.forEach(r => b.innerHTML += `<tr><td>${r.emp_id}</td><td>${r.fullname}</td><td>${r.bank_name}</td><td>${r.bank_account}</td><td>${r.id_card}</td><td>${r.address || '-'}</td></tr>`);
+      data.forEach(r => {
+        b.innerHTML += `<tr>
+          <td>${r.emp_id}</td>
+          <td>${r.fullname}</td>
+          <td>${r.bank_name}</td>
+          <td>${r.bank_account}</td>
+          <td>${r.id_card}</td>
+          <td>${r.address || '-'}</td>
+          <td>
+            <button class="btn-edit" onclick="editEmp('${r.emp_id}')">แก้ไข</button>
+            <button class="btn-del" onclick="deleteEmp('${r.emp_id}')">ลบ</button>
+          </td>
+        </tr>`;
+      });
+    });
+  }
+
+  function editEmp(id) {
+    const emp = employeesData.find(e => e.emp_id === id);
+    if(emp) {
+      document.getElementById('emp_id').value = emp.emp_id;
+      document.getElementById('emp_id').disabled = true; // ล็อกรหัสไว้ไม่ให้แก้ (ป้องกัน ID ซ้ำ)
+      document.getElementById('fullname').value = emp.fullname;
+      document.getElementById('bank_name').value = emp.bank_name;
+      document.getElementById('bank_acc').value = emp.bank_account;
+      document.getElementById('id_card').value = emp.id_card;
+      document.getElementById('address').value = emp.address;
+      window.scrollTo(0, 0); // เลื่อนขึ้นไปดูฟอร์ม
+    }
+  }
+
+  function deleteEmp(id) {
+    if(confirm(`ยืนยันการลบพนักงานรหัส ${id} ใช่หรือไม่?`)) {
+      fetch(`/delete-employee/${id}`, { method: 'DELETE' })
+        .then(res => res.text())
+        .then(msg => {
+          alert(msg);
+          loadEmployees();
+        });
+    }
+  }
+
+  // ส่วนบันทึกงานรายวัน
+  function fetchName() {
+    const id = document.getElementById('daily_id').value;
+    if(!id) return;
+    fetch('/get-employee/'+id).then(res=>res.json()).then(data => {
+      document.getElementById('daily_name').value = data.found ? data.fullname : "ไม่พบรหัส";
     });
   }
 
@@ -199,7 +253,11 @@
       note: document.getElementById('note_select').value
     };
     if(!p.emp_id) return alert("ระบุรหัสพนักงาน");
-    fetch('/add-daily-record', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(p) }).then(() => { loadDaily(); alert("สำเร็จ"); });
+    fetch('/add-daily-record', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(p) }).then(() => { 
+      loadDaily(); alert("สำเร็จ"); 
+      document.getElementById('daily_id').value = "";
+      document.getElementById('daily_name').value = "";
+    });
   }
 
   function loadDaily() {
@@ -217,20 +275,15 @@
     fetch(`/weekly-summary?start_date=${s}&end_date=${e}&branch=${br}`).then(res=>res.json()).then(data => {
       const b = document.getElementById('summary_tbody'); b.innerHTML = '';
       data.forEach((r, i) => {
-        // จัดการค่าเริ่มต้นเป็น 0 หากไม่มีข้อมูล
-        const absent = r.deduct_absent || 0;
-        const uniform = r.deduct_uniform || 0;
-        const tax = r.tax || 0;
-
         b.innerHTML += `<tr>
           <td>${i+1}</td><td>${r.emp_id}</td><td>${r.fullname}</td>
           <td class="text-center">${r.total_days}</td>
           <td class="text-center">${(r.daily_rate||0).toLocaleString()}</td>
           <td class="text-center">${(r.total_comm||0).toLocaleString()}</td>
-          <td class="text-center">${absent.toLocaleString()}</td>
-          <td class="text-center">${uniform.toLocaleString()}</td>
+          <td class="text-center">${(r.deduct_absent||0).toLocaleString()}</td>
+          <td class="text-center">${(r.deduct_uniform||0).toLocaleString()}</td>
           <td class="text-center" style="color:var(--accent)">${(r.total_income||0).toLocaleString()}</td>
-          <td class="text-center" style="color:#ff6b6b">${tax.toLocaleString()}</td>
+          <td class="text-center" style="color:#ff6b6b">${(r.tax||0).toLocaleString()}</td>
           <td class="text-center" style="font-weight:500; color:#4CAF50">${(r.net_income||0).toLocaleString()}</td>
           <td>${r.bank_account}</td><td>${r.bank_name}</td><td>${r.id_card}</td><td>${r.address || '-'}</td>
         </tr>`;

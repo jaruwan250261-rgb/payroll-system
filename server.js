@@ -103,4 +103,15 @@ app.get("/list-employees", async (req, res) => {
   }
   res.json(data);
 });
+// ลบพนักงาน
+app.delete("/delete-employee/:emp_id", async (req, res) => {
+  const { emp_id } = req.params;
+  const { error } = await supabase
+    .from('employees')
+    .delete()
+    .eq('emp_id', emp_id);
+  
+  if (error) return res.status(500).send("ไม่สามารถลบพนักงานได้ (อาจมีข้อมูลบันทึกงานค้างอยู่)");
+  res.send("ลบพนักงานเรียบร้อย");
+});
 app.listen(3000, () => console.log("🚀 Server Online connected to Supabase"));
