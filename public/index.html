@@ -15,39 +15,28 @@
       --input-bg: #242422;
     }
     body { font-family: 'Kanit', sans-serif; background: var(--bg); color: var(--text-main); padding: 40px 20px; line-height: 1.6; font-size: 16px; }
-    
-    /* ขยายความกว้างสูงสุดให้เต็มจอมากขึ้นเพื่อลดการเบียดของตาราง */
     .container { max-width: 95%; margin: auto; background: var(--card); padding: 40px; border-radius: 12px; border: 1px solid var(--border); box-shadow: 0 20px 50px rgba(0,0,0,0.5); }
-    
     h3 { font-weight: 400; letter-spacing: 1px; color: var(--accent); text-transform: uppercase; margin-bottom: 25px; font-size: 24px; }
-    
     .tab-menu { display: flex; gap: 40px; margin-bottom: 40px; border-bottom: 1px solid var(--border); }
     .tab-btn { background: none; border: none; padding: 15px 5px; color: var(--text-sub); cursor: pointer; font-size: 18px; transition: 0.3s; position: relative; font-family: 'Kanit', sans-serif; }
     .tab-btn.active { color: var(--accent); font-weight: 400; }
     .tab-btn.active::after { content: ''; position: absolute; bottom: -1px; left: 0; width: 100%; height: 2px; background: var(--accent); }
-
     .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 25px; }
     label { font-size: 14px; color: var(--accent); margin-bottom: 8px; display: block; opacity: 0.9; }
-    
     input, select { background: var(--input-bg); border: 1px solid var(--border); padding: 12px; border-radius: 6px; color: var(--text-main); width: 100%; box-sizing: border-box; font-family: 'Kanit', sans-serif; font-size: 15px; }
-    
-    input[type="date"]::-webkit-calendar-picker-indicator {
-      filter: invert(68%) sepia(36%) saturate(542%) hue-rotate(1deg) brightness(92%) contrast(88%);
-      cursor: pointer;
-      transform: scale(1.3);
-    }
-
     button { border: none; padding: 16px 30px; border-radius: 6px; cursor: pointer; font-family: 'Kanit', sans-serif; font-size: 16px; transition: 0.3s; }
     .btn-save { background: var(--accent); color: #121210; width: 100%; font-weight: 500; }
-    .btn-save:hover { background: #D6B67A; transform: translateY(-1px); }
     .btn-del { background: transparent; color: #ff6b6b; border: 1px solid #ff6b6b; font-size: 12px; padding: 5px 10px; border-radius: 4px; }
-    
     .table-responsive { overflow-x: auto; margin-top: 30px; border-radius: 8px; border: 1px solid var(--border); }
-    table { width: 100%; border-collapse: collapse; background: transparent; white-space: nowrap; } /* white-space: nowrap ป้องกันตัวหนังสือตัดบรรทัด */
+    table { width: 100%; border-collapse: collapse; white-space: nowrap; }
     th { border-bottom: 1px solid var(--border); padding: 15px 12px; text-align: left; font-size: 14px; color: var(--accent); font-weight: 400; background: rgba(197, 160, 89, 0.05); }
     td { padding: 15px 12px; border-bottom: 1px solid #262624; font-size: 14px; color: #CCC; }
-    tr:hover td { color: var(--text-main); background: #222220; }
     
+    /* คลาสสำหรับการจัดกึ่งกลางข้อมูลตัวเลข */
+    .text-center { text-align: center !important; }
+    th.text-center { text-align: center !important; }
+
+    tr:hover td { color: var(--text-main); background: #222220; }
     .header-box { border: 1px solid var(--border); padding: 30px; text-align: center; margin-bottom: 30px; background: var(--input-bg); border-radius: 8px; }
   </style>
 </head>
@@ -78,17 +67,10 @@
       <div style="grid-column: span 3;"><label>ที่อยู่ตามทะเบียนบ้าน</label><input type="text" id="address"></div>
     </div>
     <button class="btn-save" onclick="saveEmployee()">บันทึกข้อมูลพนักงาน</button>
-    
     <div class="table-responsive">
       <table>
         <thead>
-          <tr>
-            <th>รหัส</th>
-            <th>ชื่อ-นามสกุล</th>
-            <th>ธนาคาร</th>
-            <th>เลขบัญชี</th>
-            <th>บัตรประชาชน</th>
-            <th>ที่อยู่ตามทะเบียนบ้าน</th> </tr>
+          <tr><th>รหัส</th><th>ชื่อ-นามสกุล</th><th>ธนาคาร</th><th>เลขบัญชี</th><th>บัตรประชาชน</th><th>ที่อยู่ตามทะเบียนบ้าน</th></tr>
         </thead>
         <tbody id="emp_tbody"></tbody>
       </table>
@@ -143,8 +125,15 @@
       <table id="summary_table">
         <thead>
           <tr>
-            <th>No.</th><th>รหัส</th><th>ชื่อ-นามสกุล</th><th>วันทำ</th><th>วันละ</th><th>ค่าคอมมิชชั่น</th>
-            <th>หักมาสาย</th><th>หักค่าเสื้อ</th><th>รายได้รวม</th><th>หักภาษี 3%</th><th>รายได้สุทธิ</th>
+            <th>No.</th><th>รหัส</th><th>ชื่อ-นามสกุล</th>
+            <th class="text-center">วันทำ</th>
+            <th class="text-center">วันละ</th>
+            <th class="text-center">ค่าคอมมิชชั่น</th>
+            <th class="text-center">หักมาสาย</th>
+            <th class="text-center">หักค่าเสื้อ</th>
+            <th class="text-center">รายได้รวม</th>
+            <th class="text-center">หักภาษี 3%</th>
+            <th class="text-center">รายได้สุทธิ</th>
             <th>เลขบัญชี</th><th>ธนาคาร</th><th>บัตรประชาชน</th><th>ที่อยู่</th>
           </tr>
         </thead>
@@ -183,8 +172,7 @@
     };
     if(!p.emp_id || !p.fullname) return alert("กรุณาระบุรหัสและชื่อ");
     fetch('/save-employee', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(p) }).then(() => { 
-      loadEmployees(); 
-      alert("บันทึกเรียบร้อย"); 
+      loadEmployees(); alert("บันทึกเรียบร้อย"); 
       document.getElementById('emp_id').value = ""; document.getElementById('fullname').value = "";
     });
   }
@@ -229,10 +217,21 @@
     fetch(`/weekly-summary?start_date=${s}&end_date=${e}&branch=${br}`).then(res=>res.json()).then(data => {
       const b = document.getElementById('summary_tbody'); b.innerHTML = '';
       data.forEach((r, i) => {
+        // จัดการค่าเริ่มต้นเป็น 0 หากไม่มีข้อมูล
+        const absent = r.deduct_absent || 0;
+        const uniform = r.deduct_uniform || 0;
+        const tax = r.tax || 0;
+
         b.innerHTML += `<tr>
-          <td>${i+1}</td><td>${r.emp_id}</td><td>${r.fullname}</td><td>${r.total_days}</td><td>${r.daily_rate}</td><td>${r.total_comm}</td>
-          <td>${r.deduct_absent}</td><td>${r.deduct_uniform}</td><td style="color:var(--accent)">${(r.total_income||0).toLocaleString()}</td>
-          <td style="color:#ff6b6b">${(r.tax||0).toLocaleString()}</td><td style="font-weight:500; color:#4CAF50">${(r.net_income||0).toLocaleString()}</td>
+          <td>${i+1}</td><td>${r.emp_id}</td><td>${r.fullname}</td>
+          <td class="text-center">${r.total_days}</td>
+          <td class="text-center">${(r.daily_rate||0).toLocaleString()}</td>
+          <td class="text-center">${(r.total_comm||0).toLocaleString()}</td>
+          <td class="text-center">${absent.toLocaleString()}</td>
+          <td class="text-center">${uniform.toLocaleString()}</td>
+          <td class="text-center" style="color:var(--accent)">${(r.total_income||0).toLocaleString()}</td>
+          <td class="text-center" style="color:#ff6b6b">${tax.toLocaleString()}</td>
+          <td class="text-center" style="font-weight:500; color:#4CAF50">${(r.net_income||0).toLocaleString()}</td>
           <td>${r.bank_account}</td><td>${r.bank_name}</td><td>${r.id_card}</td><td>${r.address || '-'}</td>
         </tr>`;
       });
