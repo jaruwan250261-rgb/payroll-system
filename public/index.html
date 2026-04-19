@@ -1,4 +1,5 @@
 <script>
+    // 🛡️ ยามเฝ้าประตูหน้าบ้าน (Check Session เบื้องต้น)
     if (localStorage.getItem('isLoggedIn') !== 'true') {
         window.location.href = 'login.html';
     }
@@ -121,8 +122,16 @@
 
 <script>
     let employeesData = [];
-    function logout() { if(confirm('ออกจากระบบ?')) { localStorage.removeItem('isLoggedIn'); window.location.href = 'login.html'; } }
-    
+
+    // 🔒 ฟังก์ชัน Logout ดึง Session ออก
+    async function logout() {
+        if(confirm('ยืนยันออกจากระบบ?')) {
+            await fetch('/api/logout', { method: 'POST' });
+            localStorage.removeItem('isLoggedIn');
+            window.location.href = 'login.html';
+        }
+    }
+
     function switchTab(id, btn) {
         document.querySelectorAll('.tab-content').forEach(t => t.style.display = 'none');
         document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
@@ -132,8 +141,12 @@
         if(id === 'tab-daily') { if(!document.getElementById('record_date').value) document.getElementById('record_date').valueAsDate = new Date(); loadDaily(); }
     }
 
+    // --- 🟢 ข้อมูลพนักงาน ---
     function loadEmployees() {
-        fetch('/list-employees').then(res=>res.json()).then(data => {
+        fetch('/api/list-employees').then(res => {
+            if(res.status === 401) window.location.href = 'login.html';
+            return res.json();
+        }).then(data => {
             data.sort((a,b) => a.emp_id.localeCompare(b.emp_id, undefined, {numeric:true}));
             employeesData = data;
             const b = document.getElementById('emp_tbody'); b.innerHTML = '';
@@ -143,7 +156,7 @@
 
     function saveEmployee() {
         const p = { emp_id:document.getElementById('emp_id').value, fullname:document.getElementById('fullname').value, bank_name:document.getElementById('bank_name').value, bank_account:document.getElementById('bank_acc').value, id_card:document.getElementById('id_card').value, address:document.getElementById('address').value };
-        fetch('/save-employee',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(p)}).then(() => { alert("บันทึกสำเร็จ"); loadEmployees(); });
+        fetch('/api/save-employee',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(p)}).then(() => { alert("บันทึกสำเร็จ"); loadEmployees(); });
     }
 
     function editEmp(id) {
@@ -151,32 +164,33 @@
         if(emp) { document.getElementById('emp_id').value = emp.emp_id; document.getElementById('fullname').value = emp.fullname; document.getElementById('bank_acc').value = emp.bank_account; document.getElementById('id_card').value = emp.id_card; document.getElementById('address').value = emp.address || ''; window.scrollTo(0,0); }
     }
 
-    function deleteEmp(id) { if(confirm('ลบพนักงาน?')) fetch(`/delete-employee/${id}`,{method:'DELETE'}).then(()=>loadEmployees()); }
+    function deleteEmp(id) { if(confirm('ลบพนักงาน?')) fetch(`/api/delete-employee/${id}`,{method:'DELETE'}).then(()=>loadEmployees()); }
 
+    // --- 🟡 บันทึกรายวัน ---
     function fetchName() {
         const id = document.getElementById('daily_id').value;
-        fetch('/get-employee/'+id).then(res=>res.json()).then(data => { document.getElementById('daily_name').value = data.found ? data.fullname : "ไม่พบรหัส"; });
+        fetch('/api/get-employee/'+id).then(res=>res.json()).then(data => { document.getElementById('daily_name').value = data.found ? data.fullname : "ไม่พบรหัส"; });
     }
 
     function saveDaily() {
         const p = { date:document.getElementById('record_date').value, emp_id:document.getElementById('daily_id').value, branch:document.getElementById('daily_branch').value, work_days:parseFloat(document.getElementById('work_days').value), daily_rate:parseFloat(document.getElementById('rate').value), commission:parseFloat(document.getElementById('comm').value), deduct_absent:parseFloat(document.getElementById('d_absent').value), deduct_uniform:parseFloat(document.getElementById('d_uniform').value) };
-        fetch('/add-daily-record',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(p)}).then(() => { loadDaily(); alert("บันทึกงานสำเร็จ"); });
+        fetch('/api/add-daily-record',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(p)}).then(() => { loadDaily(); alert("บันทึกงานสำเร็จ"); });
     }
 
     function loadDaily() {
-        fetch('/records-by-date/'+document.getElementById('record_date').value).then(res=>res.json()).then(data => {
+        fetch('/api/records-by-date/'+document.getElementById('record_date').value).then(res=>res.json()).then(data => {
             const b = document.getElementById('daily_tbody'); b.innerHTML = '';
-            // เพิ่มการโชว์ r.emp_id ในตาราง
             data.forEach(r => b.innerHTML += `<tr><td>${r.emp_id}</td><td>${r.fullname}</td><td>${r.daily_rate}</td><td>${r.work_days}</td><td>${r.commission || 0}</td><td>${r.deduct_absent || 0}</td><td>${r.deduct_uniform || 0}</td><td>${r.total_income}</td><td class="text-right"><button class="btn-del-mini" onclick="delRec(${r.id})">ลบ</button></td></tr>`);
         });
     }
 
-    function delRec(id) { if(confirm('ลบรายการ?')) fetch('/delete-record/'+id,{method:'DELETE'}).then(()=>loadDaily()); }
+    function delRec(id) { if(confirm('ลบรายการ?')) fetch('/api/delete-record/'+id,{method:'DELETE'}).then(()=>loadDaily()); }
 
+    // --- 🔵 สรุปยอดเงิน ---
     function loadSummary() {
         const s = document.getElementById('s_date').value, e = document.getElementById('e_date').value, br = document.getElementById('sum_branch').value;
         if(!s || !e) return alert("เลือกช่วงวันที่");
-        fetch(`/raw-records?start_date=${s}&end_date=${e}&branch=${br}`).then(res=>res.json()).then(data => {
+        fetch(`/api/raw-records?start_date=${s}&end_date=${e}&branch=${br}`).then(res=>res.json()).then(data => {
             const b = document.getElementById('summary_tbody'); b.innerHTML = '';
             data.forEach((r, i) => {
                 const tax = r.total_income * 0.03;
