@@ -1,5 +1,5 @@
 <script>
-    // 🛡️ ยามเฝ้าประตู: เช็คสิทธิ์ก่อนเริ่มโหลดหน้าเว็บ
+    // 🛡️ เช็ค Login ก่อนเลย ถ้าไม่ใช่ให้ดีดออกทันที
     if (localStorage.getItem('isLoggedIn') !== 'true') {
         window.location.href = 'login.html';
     }
@@ -21,7 +21,6 @@
             --input-bg: #242422;
         }
         body { font-family: 'Kanit', sans-serif; background: var(--bg); color: var(--text-main); padding: 40px 20px; line-height: 1.6; font-size: 16px; }
-        /* ... CSS เดิมของคุณเฟรมคงไว้ทั้งหมด ... */
         .container { max-width: 95%; margin: auto; background: var(--card); padding: 40px; border-radius: 12px; border: 1px solid var(--border); box-shadow: 0 20px 50px rgba(0,0,0,0.5); }
         h3 { font-weight: 400; letter-spacing: 1px; color: var(--accent); text-transform: uppercase; margin-bottom: 25px; font-size: 24px; }
         .tab-menu { display: flex; gap: 40px; margin-bottom: 40px; border-bottom: 1px solid var(--border); }
@@ -44,10 +43,7 @@
         .text-center { text-align: center !important; }
         tr:hover td { color: var(--text-main); background: #222220; }
         .header-box { border: 1px solid var(--border); padding: 30px; text-align: center; margin-bottom: 30px; background: var(--input-bg); border-radius: 8px; }
-        
-        /* 🔴 ปุ่ม Logout เพิ่มเติม */
-        .btn-logout { background: #ff4d4d; color: white; padding: 10px 20px; float: right; margin-top: -60px; font-size: 14px; }
-        .btn-logout:hover { background: #cc0000; }
+        .btn-logout { background: #ff4d4d; color: white; padding: 10px 20px; float: right; margin-top: -60px; font-size: 14px; border-radius: 6px; }
     </style>
 </head>
 <body>
@@ -61,10 +57,62 @@
     <button class="tab-btn" onclick="switchTab('tab-summary', this)">สรุปยอดเงิน</button>
   </div>
 
+  <div id="tab-employee" class="tab-content">
+    <h3>ลงทะเบียนพนักงาน</h3>
+    <div class="grid">
+      <div><label>รหัสพนักงาน</label><input type="text" id="emp_id"></div>
+      <div style="grid-column: span 2;"><label>ชื่อ-นามสกุล</label><input type="text" id="fullname"></div>
+      <div><label>ธนาคาร</label><select id="bank_name"><option>กสิกรไทย</option><option>จ่ายนอกระบบ</option><option>อื่นๆ</option></select></div>
+      <div><label>เลขบัญชี</label><input type="text" id="bank_acc"></div>
+      <div><label>บัตรประชาชน</label><input type="text" id="id_card"></div>
+      <div style="grid-column: span 3;"><label>ที่อยู่</label><input type="text" id="address"></div>
+    </div>
+    <button class="btn-save" onclick="saveEmployee()">บันทึกข้อมูลพนักงาน</button>
+    <div class="table-responsive">
+      <table>
+        <thead><tr><th>รหัส</th><th>ชื่อ</th><th>ธนาคาร</th><th>เลขบัญชี</th><th>จัดการ</th></tr></thead>
+        <tbody id="emp_tbody"></tbody>
+      </table>
+    </div>
   </div>
 
+  <div id="tab-daily" class="tab-content" style="display:none;">
+    <div class="header-box">
+        <h3>วันที่บันทึก: <input type="date" id="record_date" onchange="loadDaily()" style="color:var(--accent); background:none; border:none; font-size:22px;"></h3>
+    </div>
+    <div class="grid">
+        <div><label>รหัสพนักงาน</label><input type="text" id="daily_id" onkeydown="if(event.key==='Enter') fetchName()"></div>
+        <div><label>ชื่อ</label><input type="text" id="daily_name" disabled></div>
+        <div><label>เรท</label><input type="number" id="rate"></div>
+    </div>
+    <button class="btn-save" onclick="saveDaily()">บันทึกงาน</button>
+    <div class="table-responsive">
+        <table>
+            <thead><tr><th>ชื่อ</th><th>เรท</th><th>ลบ</th></tr></thead>
+            <tbody id="daily_tbody"></tbody>
+        </table>
+    </div>
+  </div>
+
+  <div id="tab-summary" class="tab-content" style="display:none;">
+    <h3>สรุปยอดเงิน</h3>
+    <div class="header-box">
+        <input type="date" id="s_date"> ถึง <input type="date" id="e_date">
+        <button class="btn-save" style="width:auto" onclick="loadSummary()">แสดงสรุป</button>
+    </div>
+    <div class="table-responsive">
+        <table id="summary_table">
+            <thead><tr><th>ชื่อ</th><th>รายได้สุทธิ</th><th>บัญชี</th></tr></thead>
+            <tbody id="summary_tbody"></tbody>
+        </table>
+    </div>
+  </div>
+
+</div>
+
 <script>
-  // 🔴 ฟังก์ชัน Logout
+  let employeesData = [];
+
   function logout() {
       if(confirm('ยืนยันการออกจากระบบ?')) {
           localStorage.removeItem('isLoggedIn');
@@ -72,7 +120,49 @@
       }
   }
 
-  // ... ส่วน JavaScript เดิมของคุณเฟรมทั้งหมด (switchTab, saveEmployee, ฯลฯ) คงไว้ตามเดิม ...
+  function switchTab(id, btn) {
+    document.querySelectorAll('.tab-content').forEach(t => t.style.display = 'none');
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById(id).style.display = 'block';
+    btn.classList.add('active');
+    if(id === 'tab-employee') loadEmployees();
+  }
+
+  function loadEmployees() {
+    fetch('/list-employees').then(res=>res.json()).then(data => {
+      employeesData = data;
+      const b = document.getElementById('emp_tbody'); b.innerHTML = '';
+      data.forEach(r => {
+        b.innerHTML += `<tr><td>${r.emp_id}</td><td>${r.fullname}</td><td>${r.bank_name}</td><td>${r.bank_account}</td>
+          <td><button class="btn-del" onclick="deleteEmp('${r.emp_id}')">ลบ</button></td></tr>`;
+      });
+    });
+  }
+
+  function saveEmployee() {
+    const p = {
+      emp_id: document.getElementById('emp_id').value,
+      fullname: document.getElementById('fullname').value,
+      bank_name: document.getElementById('bank_name').value,
+      bank_account: document.getElementById('bank_acc').value,
+      id_card: document.getElementById('id_card').value,
+      address: document.getElementById('address').value
+    };
+    fetch('/save-employee', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(p) }).then(() => { 
+      alert("บันทึกสำเร็จ"); loadEmployees(); 
+    });
+  }
+
+  function deleteEmp(id) {
+    if(confirm('ลบ?')) fetch(`/delete-employee/${id}`, { method: 'DELETE' }).then(() => loadEmployees());
+  }
+
+  // โหลดข้อมูลเมื่อเปิดหน้าครั้งแรก (ถ้า Login แล้ว)
+  window.onload = () => {
+    if (localStorage.getItem('isLoggedIn') === 'true') {
+        loadEmployees();
+    }
+  };
 </script>
 </body>
 </html>
