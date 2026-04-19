@@ -3,11 +3,13 @@ const express = require('express');
 const { createClient } = require('@supabase/supabase-js');
 const helmet = require('helmet');
 const path = require('path');
+const bcrypt = require('bcrypt'); // ✅ เพิ่ม bcrypt
+const saltRounds = 10; // ✅ ตั้งค่าความปลอดภัย
 const app = express();
 
 // --- 1. Security & Middleware ---
 app.use(helmet({
-  contentSecurityPolicy: false, // เพื่อให้โหลด Google Fonts และ Script ง่ายขึ้น
+  contentSecurityPolicy: false,
 }));
 app.use(express.json());
 app.use(express.static('public'));
@@ -15,21 +17,52 @@ app.use(express.static('public'));
 // เชื่อมต่อ Supabase
 const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_KEY);
 
-// --- 2. Login System ---
+// --- 2. Authentication System (สมัคร & ล็อกอิน) ---
+
+// ✅ เพิ่ม Route สำหรับสมัครสมาชิก (Register) เพื่อสร้างรหัสแบบ Hash
+app.post("/api/register", async (req, res) => {
+  try {
+    const { username, password } = req.body;
+    if (!username || !password) return res.status(400).json({ message: "กรุณากรอกข้อมูลให้ครบ" });
+
+    // 🔒 เข้ารหัสรหัสผ่านก่อนบันทึก
+    const hashedPassword = await bcrypt.hash(password, saltRounds);
+
+    const { data, error } = await supabase
+      .from('users')
+      .insert([{ username, password: hashedPassword }]);
+
+    if (error) throw error;
+    res.json({ success: true, message: "สร้างบัญชีเรียบร้อยแล้ว" });
+  } catch (err) {
+    res.status(500).json({ success: false, message: "อาจมีชื่อผู้ใช้นี้แล้ว หรือเซิร์ฟเวอร์ขัดข้อง" });
+  }
+});
+
+// 🔑 แก้ไข Login System ให้ใช้ bcrypt เทียบรหัส
 app.post("/api/login", async (req, res) => {
   try {
     const { username, password } = req.body;
-    const { data, error } = await supabase
+    
+    // 🔍 1. หา user จากชื่อก่อน
+    const { data: user, error } = await supabase
       .from('users')
       .select('*')
       .eq('username', username)
-      .eq('password', password) // ในอนาคตแนะนำให้ใช้การ Hash รหัสผ่าน
       .single();
 
-    if (error || !data) {
+    if (error || !user) {
       return res.status(401).json({ success: false, message: "ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง" });
     }
-    res.json({ success: true, user: { username: data.username } });
+
+    // 🔒 2. เทียบรหัสที่กรอก กับรหัสที่ถูก Hash ใน DB
+    const isMatch = await bcrypt.compare(password, user.password);
+
+    if (isMatch) {
+      res.json({ success: true, user: { username: user.username } });
+    } else {
+      res.status(401).json({ success: false, message: "ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง" });
+    }
   } catch (err) {
     res.status(500).json({ success: false, message: "เกิดข้อผิดพลาดที่เซิร์ฟเวอร์" });
   }
@@ -61,15 +94,13 @@ app.get("/get-employee/:id", async (req, res) => {
   res.json({ found: !!data, fullname: data ? data.fullname : "" });
 });
 
-// --- 4. Daily Records & Logic (ย้ายการคำนวณมาไว้ที่นี่) ---
+// --- 4. Daily Records & Logic ---
 app.post("/add-daily-record", async (req, res) => {
   try {
     const { emp_id, date, work_days, daily_rate, commission, deduct_absent, deduct_uniform } = req.body;
 
-    // Validation เบื้องต้น
     if (!emp_id || !date) return res.status(400).send("กรุณากรอกรหัสพนักงานและวันที่");
 
-    // คำนวณเงินที่ Backend เพื่อความปลอดภัย
     const total_income = (Number(work_days) * Number(daily_rate)) + Number(commission);
     const total_deduct = Number(deduct_absent) + Number(deduct_uniform);
     const tax = total_income * 0.03;
@@ -122,7 +153,6 @@ app.get("/weekly-summary", async (req, res) => {
   const { data, error } = await query;
   if (error) return res.status(500).json([]);
 
-  // จัดกลุ่มข้อมูลพนักงาน
   const summary = {};
   data.forEach(r => {
     const id = r.emp_id;
@@ -141,15 +171,4 @@ app.get("/weekly-summary", async (req, res) => {
     summary[id].total_days += r.work_days;
     summary[id].total_comm += r.commission;
     summary[id].deduct_absent += r.deduct_absent;
-    summary[id].deduct_uniform += r.deduct_uniform;
-    summary[id].total_income += r.total_income;
-    summary[id].tax += r.tax;
-    summary[id].net_income += r.net_income;
-  });
-
-  res.json(Object.values(summary));
-});
-
-// Start Server
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`Server is running on port ${PORT}`));
+    summary[id].deduct_uniform += r.deduct_uniform
