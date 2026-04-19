@@ -87,7 +87,7 @@
         <div class="table-responsive">
             <table>
                 <thead>
-                    <tr><th>ชื่อ</th><th>เรท</th><th>วัน</th><th>ค่าคอมมิชชั่น</th><th>หักค่ามาสาย</th><th>หักค่าเสื้อ / สายคล้องคอ</th><th>รวม</th><th></th></tr>
+                    <tr><th>รหัส</th><th>ชื่อ</th><th>เรท</th><th>วัน</th><th>ค่าคอมมิชชั่น</th><th>หักค่ามาสาย</th><th>หักค่าเสื้อ / สายคล้องคอ</th><th>รวม</th><th></th></tr>
                 </thead>
                 <tbody id="daily_tbody"></tbody>
             </table>
@@ -148,7 +148,7 @@
 
     function editEmp(id) {
         const emp = employeesData.find(e => e.emp_id === id);
-        if(emp) { document.getElementById('emp_id').value = emp.emp_id; document.getElementById('fullname').value = emp.fullname; document.getElementById('bank_name').value = emp.bank_name; document.getElementById('bank_acc').value = emp.bank_account; document.getElementById('id_card').value = emp.id_card; document.getElementById('address').value = emp.address || ''; window.scrollTo(0,0); }
+        if(emp) { document.getElementById('emp_id').value = emp.emp_id; document.getElementById('fullname').value = emp.fullname; document.getElementById('bank_acc').value = emp.bank_account; document.getElementById('id_card').value = emp.id_card; document.getElementById('address').value = emp.address || ''; window.scrollTo(0,0); }
     }
 
     function deleteEmp(id) { if(confirm('ลบพนักงาน?')) fetch(`/delete-employee/${id}`,{method:'DELETE'}).then(()=>loadEmployees()); }
@@ -166,18 +166,16 @@
     function loadDaily() {
         fetch('/records-by-date/'+document.getElementById('record_date').value).then(res=>res.json()).then(data => {
             const b = document.getElementById('daily_tbody'); b.innerHTML = '';
-            data.forEach(r => b.innerHTML += `<tr><td>${r.fullname}</td><td>${r.daily_rate}</td><td>${r.work_days}</td><td>${r.commission || 0}</td><td>${r.deduct_absent || 0}</td><td>${r.deduct_uniform || 0}</td><td>${r.total_income}</td><td class="text-right"><button class="btn-del-mini" onclick="delRec(${r.id})">ลบ</button></td></tr>`);
+            // เพิ่มการโชว์ r.emp_id ในตาราง
+            data.forEach(r => b.innerHTML += `<tr><td>${r.emp_id}</td><td>${r.fullname}</td><td>${r.daily_rate}</td><td>${r.work_days}</td><td>${r.commission || 0}</td><td>${r.deduct_absent || 0}</td><td>${r.deduct_uniform || 0}</td><td>${r.total_income}</td><td class="text-right"><button class="btn-del-mini" onclick="delRec(${r.id})">ลบ</button></td></tr>`);
         });
     }
 
     function delRec(id) { if(confirm('ลบรายการ?')) fetch('/delete-record/'+id,{method:'DELETE'}).then(()=>loadDaily()); }
 
-    // --- ส่วนสรุปยอดเงินแบบแสดงตามข้อมูลจริง (ไม่ Group By) ---
     function loadSummary() {
         const s = document.getElementById('s_date').value, e = document.getElementById('e_date').value, br = document.getElementById('sum_branch').value;
         if(!s || !e) return alert("เลือกช่วงวันที่");
-        
-        // ดึงข้อมูลดิบรายรายการมาแสดงผล
         fetch(`/raw-records?start_date=${s}&end_date=${e}&branch=${br}`).then(res=>res.json()).then(data => {
             const b = document.getElementById('summary_tbody'); b.innerHTML = '';
             data.forEach((r, i) => {
@@ -207,7 +205,7 @@
         const blob = new Blob([csv.join("\n")], {type:'text/csv;charset=utf-8'});
         const a = document.createElement("a");
         a.href = URL.createObjectURL(blob);
-        a.download = `สรุปยอดเงินจริง_${document.getElementById('s_date').value}.csv`;
+        a.download = `สรุปยอดเงิน_${document.getElementById('s_date').value}.csv`;
         a.click();
     }
     window.onload = () => { if (localStorage.getItem('isLoggedIn') === 'true') loadEmployees(); };
