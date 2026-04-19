@@ -1,5 +1,4 @@
 <script>
-    // 🛡️ ยามเฝ้าประตู: เช็คสิทธิ์ก่อนเริ่มโหลดหน้าเว็บ
     if (localStorage.getItem('isLoggedIn') !== 'true') {
         window.location.href = 'login.html';
     }
@@ -12,32 +11,26 @@
     <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@200;300;400;500&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg: #121210;
-            --card: #1C1C1A;
-            --accent: #C5A059;
-            --text-main: #E5E5E0;
-            --text-sub: #8E8E88;
-            --border: #2D2D2A;
-            --input-bg: #242422;
+            --bg: #121210; --card: #1C1C1A; --accent: #C5A059; --text-main: #E5E5E0;
+            --text-sub: #8E8E88; --border: #2D2D2A; --input-bg: #242422;
         }
-        body { font-family: 'Kanit', sans-serif; background: var(--bg); color: var(--text-main); padding: 40px 20px; line-height: 1.6; font-size: 16px; }
+        body { font-family: 'Kanit', sans-serif; background: var(--bg); color: var(--text-main); padding: 40px 20px; }
         .container { max-width: 95%; margin: auto; background: var(--card); padding: 40px; border-radius: 12px; border: 1px solid var(--border); box-shadow: 0 20px 50px rgba(0,0,0,0.5); }
-        h3 { font-weight: 400; letter-spacing: 1px; color: var(--accent); text-transform: uppercase; margin-bottom: 25px; font-size: 24px; }
+        h3 { color: var(--accent); text-transform: uppercase; margin-bottom: 25px; }
         .tab-menu { display: flex; gap: 40px; margin-bottom: 40px; border-bottom: 1px solid var(--border); }
-        .tab-btn { background: none; border: none; padding: 15px 5px; color: var(--text-sub); cursor: pointer; font-size: 18px; transition: 0.3s; position: relative; font-family: 'Kanit', sans-serif; }
-        .tab-btn.active { color: var(--accent); font-weight: 400; }
-        .tab-btn.active::after { content: ''; position: absolute; bottom: -1px; left: 0; width: 100%; height: 2px; background: var(--accent); }
+        .tab-btn { background: none; border: none; padding: 15px 5px; color: var(--text-sub); cursor: pointer; font-size: 18px; font-family: 'Kanit'; }
+        .tab-btn.active { color: var(--accent); border-bottom: 2px solid var(--accent); }
         .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 25px; }
-        label { font-size: 14px; color: var(--accent); margin-bottom: 8px; display: block; opacity: 0.9; }
-        input, select { background: var(--input-bg); border: 1px solid var(--border); padding: 12px; border-radius: 6px; color: var(--text-main); width: 100%; box-sizing: border-box; font-family: 'Kanit', sans-serif; font-size: 15px; }
-        button { border: none; padding: 16px 30px; border-radius: 6px; cursor: pointer; font-family: 'Kanit', sans-serif; font-size: 16px; transition: 0.3s; }
+        label { font-size: 14px; color: var(--accent); margin-bottom: 8px; display: block; }
+        input, select { background: var(--input-bg); border: 1px solid var(--border); padding: 12px; border-radius: 6px; color: var(--text-main); width: 100%; box-sizing: border-box; font-family: 'Kanit'; }
+        button { border: none; padding: 16px 30px; border-radius: 6px; cursor: pointer; font-family: 'Kanit'; transition: 0.3s; }
         .btn-save { background: var(--accent); color: #121210; width: 100%; font-weight: 500; }
+        .btn-edit { background: transparent; color: var(--accent); border: 1px solid var(--accent); font-size: 12px; padding: 5px 10px; border-radius: 4px; margin-right: 5px; }
         .btn-del { background: transparent; color: #ff6b6b; border: 1px solid #ff6b6b; font-size: 12px; padding: 5px 10px; border-radius: 4px; }
-        .btn-del:hover { background: #ff6b6b; color: white; }
         .table-responsive { overflow-x: auto; margin-top: 30px; border-radius: 8px; border: 1px solid var(--border); }
-        table { width: 100%; border-collapse: collapse; white-space: nowrap; }
-        th { border-bottom: 1px solid var(--border); padding: 15px 12px; text-align: left; font-size: 14px; color: var(--accent); font-weight: 400; background: rgba(197, 160, 89, 0.05); }
-        td { padding: 15px 12px; border-bottom: 1px solid #262624; font-size: 14px; color: #CCC; }
+        table { width: 100%; border-collapse: collapse; }
+        th { padding: 15px; text-align: left; font-size: 14px; color: var(--accent); background: rgba(197, 160, 89, 0.05); }
+        td { padding: 15px; border-bottom: 1px solid #262624; font-size: 14px; color: #CCC; }
         .btn-logout { background: #ff4d4d; color: white; padding: 10px 20px; float: right; margin-top: -60px; font-size: 14px; border-radius: 6px; }
     </style>
 </head>
@@ -45,7 +38,6 @@
 
 <div class="container">
     <button class="btn-logout" onclick="logout()">ออกจากระบบ</button>
-
     <div class="tab-menu">
         <button class="tab-btn active" onclick="switchTab('tab-employee', this)">ข้อมูลพนักงาน</button>
         <button class="tab-btn" onclick="switchTab('tab-daily', this)">บันทึกงานรายวัน</button>
@@ -53,42 +45,34 @@
     </div>
 
     <div id="tab-employee" class="tab-content">
-        <h3>ลงทะเบียนพนักงาน</h3>
+        <h3>ลงทะเบียน/แก้ไขข้อมูลพนักงาน</h3>
         <div class="grid">
             <div><label>รหัสพนักงาน</label><input type="text" id="emp_id"></div>
             <div style="grid-column: span 2;"><label>ชื่อ-นามสกุล</label><input type="text" id="fullname"></div>
-            <div><label>ธนาคาร</label><select id="bank_name"><option>กสิกรไทย</option><option>จ่ายนอกระบบ</option><option>อื่นๆ</option></select></div>
+            <div><label>ธนาคาร</label><select id="bank_name"><option>กสิกรไทย</option><option>ไทยพาณิชย์</option><option>กรุงเทพ</option><option>จ่ายนอกระบบ</option></select></div>
             <div><label>เลขบัญชี</label><input type="text" id="bank_acc"></div>
             <div><label>บัตรประชาชน</label><input type="text" id="id_card"></div>
+            <div style="grid-column: span 3;"><label>ที่อยู่ตามทะเบียนบ้าน</label><input type="text" id="address"></div>
         </div>
         <button class="btn-save" onclick="saveEmployee()">บันทึกข้อมูลพนักงาน</button>
+
         <div class="table-responsive">
             <table>
-                <thead><tr><th>รหัส</th><th>ชื่อ</th><th>ธนาคาร</th><th>เลขบัญชี</th><th>จัดการ</th></tr></thead>
+                <thead><tr><th>รหัส</th><th>ชื่อ</th><th>ธนาคาร</th><th>เลขบัญชี</th><th>ที่อยู่</th><th>จัดการ</th></tr></thead>
                 <tbody id="emp_tbody"></tbody>
             </table>
         </div>
     </div>
-
-    <div id="tab-daily" class="tab-content" style="display:none;">
-        <h3>บันทึกงานรายวัน</h3>
-        <p style="color: var(--text-sub)">ส่วนนี้ใช้สำหรับลงเวลาทำงานประจำวัน</p>
-    </div>
-
-    <div id="tab-summary" class="tab-content" style="display:none;">
-        <h3>สรุปยอดเงิน</h3>
-        <p style="color: var(--text-sub)">ส่วนนี้ใช้สำหรับดูรายงานรายจ่าย</p>
-    </div>
+    
+    <div id="tab-daily" class="tab-content" style="display:none;"><h3>บันทึกงานรายวัน</h3></div>
+    <div id="tab-summary" class="tab-content" style="display:none;"><h3>สรุปยอดเงิน</h3></div>
 </div>
 
 <script>
     let employeesData = [];
 
     function logout() {
-        if(confirm('ยืนยันการออกจากระบบ?')) {
-            localStorage.removeItem('isLoggedIn');
-            window.location.href = 'login.html';
-        }
+        if(confirm('ยืนยันการออกจากระบบ?')) { localStorage.removeItem('isLoggedIn'); window.location.href = 'login.html'; }
     }
 
     function switchTab(id, btn) {
@@ -100,24 +84,24 @@
     }
 
     function loadEmployees() {
-        fetch('/list-employees')
-        .then(res => res.json())
-        .then(data => {
-            // เรียงลำดับตามตัวเลขรหัสพนักงาน
+        fetch('/list-employees').then(res => res.json()).then(data => {
             data.sort((a, b) => a.emp_id.localeCompare(b.emp_id, undefined, { numeric: true }));
             employeesData = data;
-            const b = document.getElementById('emp_tbody'); 
-            b.innerHTML = '';
+            const b = document.getElementById('emp_tbody'); b.innerHTML = '';
             data.forEach(r => {
                 b.innerHTML += `<tr>
                     <td>${r.emp_id}</td>
                     <td>${r.fullname}</td>
                     <td>${r.bank_name}</td>
                     <td>${r.bank_account}</td>
-                    <td><button class="btn-del" onclick="deleteEmp('${r.emp_id}')">ลบ</button></td>
+                    <td style="max-width:200px; overflow:hidden; text-overflow:ellipsis;">${r.address || '-'}</td>
+                    <td>
+                        <button class="btn-edit" onclick="editEmp('${r.emp_id}')">แก้ไข</button>
+                        <button class="btn-del" onclick="deleteEmp('${r.emp_id}')">ลบ</button>
+                    </td>
                 </tr>`;
             });
-        }).catch(err => console.error("Error loading employees:", err));
+        });
     }
 
     function saveEmployee() {
@@ -126,33 +110,38 @@
             fullname: document.getElementById('fullname').value,
             bank_name: document.getElementById('bank_name').value,
             bank_account: document.getElementById('bank_acc').value,
-            id_card: document.getElementById('id_card').value
+            id_card: document.getElementById('id_card').value,
+            address: document.getElementById('address').value
         };
-        if(!p.emp_id || !p.fullname) return alert("ระบุรหัสและชื่อพนักงาน");
-
-        fetch('/save-employee', { 
-            method:'POST', 
-            headers:{'Content-Type':'application/json'}, 
-            body:JSON.stringify(p) 
-        }).then(() => { 
+        fetch('/save-employee', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(p) }).then(() => {
             alert("บันทึกสำเร็จ");
-            document.getElementById('emp_id').value = "";
-            document.getElementById('fullname').value = "";
-            loadEmployees(); 
+            clearForm();
+            loadEmployees();
         });
     }
 
-    function deleteEmp(id) {
-        if(confirm('ลบพนักงานคนนี้?')) {
-            fetch(`/delete-employee/${id}`, { method: 'DELETE' }).then(() => loadEmployees());
+    function editEmp(id) {
+        const emp = employeesData.find(e => e.emp_id === id);
+        if(emp) {
+            document.getElementById('emp_id').value = emp.emp_id;
+            document.getElementById('fullname').value = emp.fullname;
+            document.getElementById('bank_name').value = emp.bank_name;
+            document.getElementById('bank_acc').value = emp.bank_account;
+            document.getElementById('id_card').value = emp.id_card;
+            document.getElementById('address').value = emp.address || '';
+            window.scrollTo(0,0);
         }
     }
 
-    window.onload = () => {
-        if (localStorage.getItem('isLoggedIn') === 'true') {
-            loadEmployees();
-        }
-    };
+    function deleteEmp(id) {
+        if(confirm('ลบพนักงานคนนี้?')) fetch(`/delete-employee/${id}`, { method: 'DELETE' }).then(() => loadEmployees());
+    }
+
+    function clearForm() {
+        ['emp_id','fullname','bank_acc','id_card','address'].forEach(id => document.getElementById(id).value = '');
+    }
+
+    window.onload = () => { if (localStorage.getItem('isLoggedIn') === 'true') loadEmployees(); };
 </script>
 </body>
 </html>
