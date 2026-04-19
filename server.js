@@ -168,7 +168,14 @@ app.get("/weekly-summary", async (req, res) => {
         deduct_absent: 0, deduct_uniform: 0, total_income: 0, tax: 0, net_income: 0
       };
     }
-    summary[id].total_days += r.work_days;
-    summary[id].total_comm += r.commission;
-    summary[id].deduct_absent += r.deduct_absent;
-    summary[id].deduct_uniform += r.deduct_uniform
+    summary[id].total_income += r.total_income;
+    summary[id].tax += r.tax;
+    summary[id].net_income += r.net_income;
+  });
+
+  res.json(Object.values(summary));
+});
+
+// --- 6. Start Server ---
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => console.log(`🚀 Server is running on port ${PORT}`));
