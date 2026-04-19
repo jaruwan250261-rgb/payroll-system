@@ -1,5 +1,5 @@
 <script>
-    // 🛡️ ยามเฝ้าประตูหน้าบ้าน (Check Session เบื้องต้น)
+    // 🛡️ ยามเฝ้าประตูหน้าบ้าน
     if (localStorage.getItem('isLoggedIn') !== 'true') {
         window.location.href = 'login.html';
     }
@@ -34,8 +34,6 @@
         table { width: 100%; border-collapse: collapse; white-space: nowrap; font-size: 13px; }
         th { padding: 12px 10px; text-align: left; color: var(--accent); background: rgba(197, 160, 89, 0.08); border-bottom: 1px solid var(--border); font-weight: 400; }
         td { padding: 12px 10px; border-bottom: 1px solid #262624; color: #CCC; }
-        .text-center { text-align: center; }
-        .text-right { text-align: right; }
         .header-box { border: 1px solid var(--border); padding: 20px; margin-bottom: 25px; background: var(--input-bg); border-radius: 8px; text-align: center; }
         .date-input-main { width: 220px !important; text-align: center; border: 1px solid var(--accent) !important; font-size: 18px !important; padding: 5px !important; display: block; margin: 10px auto; }
     </style>
@@ -77,6 +75,7 @@
         <div class="grid">
             <div><label>รหัสพนักงาน (Enter)</label><input type="text" id="daily_id" onkeydown="if(event.key==='Enter') fetchName()"></div>
             <div><label>ชื่อ</label><input type="text" id="daily_name" disabled></div>
+            <div><label>ตำแหน่งงาน</label><select id="daily_position"><option>Part-time ทั่วไป</option><option>Runner</option><option>เด็กเสิร์ฟ</option><option>บาร์เทนเดอร์</option><option>แคชเชียร์</option></select></div>
             <div><label>ร้าน</label><select id="daily_branch"><option>บ้านเพื่อนรัชโยธิน</option><option>Close Friend</option></select></div>
             <div><label>เรท (บาท)</label><input type="number" id="rate" value="0"></div>
             <div><label>จำนวนวัน</label><input type="number" id="work_days" value="1" step="0.5"></div>
@@ -88,7 +87,7 @@
         <div class="table-responsive">
             <table>
                 <thead>
-                    <tr><th>รหัส</th><th>ชื่อ</th><th>เรท</th><th>วัน</th><th>ค่าคอมมิชชั่น</th><th>หักค่ามาสาย</th><th>หักค่าเสื้อ / สายคล้องคอ</th><th>รวม</th><th></th></tr>
+                    <tr><th>รหัส</th><th>ชื่อ</th><th>เรท</th><th>วัน</th><th>ค่าคอมฯ</th><th>หักสาย</th><th>หักเสื้อ</th><th>รวม</th><th></th></tr>
                 </thead>
                 <tbody id="daily_tbody"></tbody>
             </table>
@@ -109,9 +108,9 @@
             <table id="summary_table">
                 <thead>
                     <tr>
-                        <th>No.</th><th>รหัส</th><th>ชื่อ-สกุล</th><th>วันทำงาน</th><th>วันละ</th><th>เพิ่มเติม</th>
-                        <th>หักมาสาย</th><th>หักค่าเสื้อ / สายคล้องคอ</th><th>ค่าคอมมิชชั่น</th><th>รายได้รวม</th><th>ภาษี 3%</th>
-                        <th style="color:var(--accent)">รายได้สุทธิ</th><th>เลขบัญชี</th><th>ธนาคาร</th><th>เลขบัตร</th><th>ที่อยู่</th>
+                        <th>No.</th><th>รหัส</th><th>ชื่อ-สกุล</th><th>วันทำงาน</th><th>วันละ</th><th>วันที่ทำงาน</th>
+                        <th>หักมาสาย</th><th>หักเสื้อ</th><th>ค่าคอมฯ</th><th>รายได้รวม</th><th>ภาษี 3%</th>
+                        <th style="color:var(--accent)">สุทธิ</th><th>เลขบัญชี</th><th>ธนาคาร</th><th>เลขบัตร</th><th>ที่อยู่</th>
                     </tr>
                 </thead>
                 <tbody id="summary_tbody"></tbody>
@@ -123,7 +122,6 @@
 <script>
     let employeesData = [];
 
-    // 🔒 ฟังก์ชัน Logout ดึง Session ออก
     async function logout() {
         if(confirm('ยืนยันออกจากระบบ?')) {
             await fetch('/api/logout', { method: 'POST' });
@@ -141,7 +139,6 @@
         if(id === 'tab-daily') { if(!document.getElementById('record_date').value) document.getElementById('record_date').valueAsDate = new Date(); loadDaily(); }
     }
 
-    // --- 🟢 ข้อมูลพนักงาน ---
     function loadEmployees() {
         fetch('/api/list-employees').then(res => {
             if(res.status === 401) window.location.href = 'login.html';
@@ -161,20 +158,31 @@
 
     function editEmp(id) {
         const emp = employeesData.find(e => e.emp_id === id);
-        if(emp) { document.getElementById('emp_id').value = emp.emp_id; document.getElementById('fullname').value = emp.fullname; document.getElementById('bank_acc').value = emp.bank_account; document.getElementById('id_card').value = emp.id_card; document.getElementById('address').value = emp.address || ''; window.scrollTo(0,0); }
+        if(emp) { document.getElementById('emp_id').value = emp.emp_id; document.getElementById('fullname').value = emp.fullname; document.getElementById('bank_name').value = emp.bank_name; document.getElementById('bank_acc').value = emp.bank_account; document.getElementById('id_card').value = emp.id_card; document.getElementById('address').value = emp.address || ''; window.scrollTo(0,0); }
     }
 
     function deleteEmp(id) { if(confirm('ลบพนักงาน?')) fetch(`/api/delete-employee/${id}`,{method:'DELETE'}).then(()=>loadEmployees()); }
 
-    // --- 🟡 บันทึกรายวัน ---
     function fetchName() {
         const id = document.getElementById('daily_id').value;
         fetch('/api/get-employee/'+id).then(res=>res.json()).then(data => { document.getElementById('daily_name').value = data.found ? data.fullname : "ไม่พบรหัส"; });
     }
 
     function saveDaily() {
-        const p = { date:document.getElementById('record_date').value, emp_id:document.getElementById('daily_id').value, branch:document.getElementById('daily_branch').value, work_days:parseFloat(document.getElementById('work_days').value), daily_rate:parseFloat(document.getElementById('rate').value), commission:parseFloat(document.getElementById('comm').value), deduct_absent:parseFloat(document.getElementById('d_absent').value), deduct_uniform:parseFloat(document.getElementById('d_uniform').value) };
-        fetch('/api/add-daily-record',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(p)}).then(() => { loadDaily(); alert("บันทึกงานสำเร็จ"); });
+        const p = { 
+            date:document.getElementById('record_date').value, 
+            emp_id:document.getElementById('daily_id').value, 
+            branch:document.getElementById('daily_branch').value, 
+            work_days:parseFloat(document.getElementById('work_days').value), 
+            daily_rate:parseFloat(document.getElementById('rate').value), 
+            commission:parseFloat(document.getElementById('comm').value), 
+            deduct_absent:parseFloat(document.getElementById('d_absent').value), 
+            deduct_uniform:parseFloat(document.getElementById('d_uniform').value) 
+        };
+        fetch('/api/add-daily-record',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(p)}).then(res => {
+            if(res.ok) { loadDaily(); alert("บันทึกงานสำเร็จ"); }
+            else alert("บันทึกไม่สำเร็จ ตรวจสอบข้อมูลอีกครั้ง");
+        });
     }
 
     function loadDaily() {
@@ -186,7 +194,6 @@
 
     function delRec(id) { if(confirm('ลบรายการ?')) fetch('/api/delete-record/'+id,{method:'DELETE'}).then(()=>loadDaily()); }
 
-    // --- 🔵 สรุปยอดเงิน ---
     function loadSummary() {
         const s = document.getElementById('s_date').value, e = document.getElementById('e_date').value, br = document.getElementById('sum_branch').value;
         if(!s || !e) return alert("เลือกช่วงวันที่");
