@@ -1,117 +1,155 @@
-const express = require("express");
-const cors = require("cors");
-const path = require("path");
-const { createClient } = require("@supabase/supabase-js");
-
-// ⚠️ ใส่ข้อมูลจากหน้า Supabase Settings ของคุณตรงนี้
-const SUPABASE_URL = "https://dvzshyculmhtursqhjis.supabase.co";
-const SUPABASE_KEY = "sb_publishable_ld0kFn6gDYnPw0v_KXD05g_Cd2UrWWh";
-
-const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
-
+require('dotenv').config();
+const express = require('express');
+const { createClient } = require('@supabase/supabase-client');
+const helmet = require('helmet');
+const path = require('path');
 const app = express();
-app.use(cors());
+
+// --- 1. Security & Middleware ---
+app.use(helmet({
+  contentSecurityPolicy: false, // เพื่อให้โหลด Google Fonts และ Script ง่ายขึ้น
+}));
 app.use(express.json());
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static('public'));
 
-// 1. ค้นหาพนักงาน
-app.get("/get-employee/:id", async (req, res) => {
-  const { data, error } = await supabase
-    .from('employees')
-    .select('*')
-    .eq('emp_id', req.params.id)
-    .single();
-  res.json(data ? { found: true, ...data } : { found: false });
-});
+// เชื่อมต่อ Supabase
+const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_KEY);
 
-// 2. บันทึกพนักงาน
-app.post("/save-employee", async (req, res) => {
-  const { error } = await supabase.from('employees').upsert(req.body);
-  res.send(error ? "เกิดข้อผิดพลาด" : "✅ บันทึกพนักงานออนไลน์สำเร็จ");
-});
+// --- 2. Login System ---
+app.post("/api/login", async (req, res) => {
+  try {
+    const { username, password } = req.body;
+    const { data, error } = await supabase
+      .from('users')
+      .select('*')
+      .eq('username', username)
+      .eq('password', password) // ในอนาคตแนะนำให้ใช้การ Hash รหัสผ่าน
+      .single();
 
-// 3. บันทึกรายวัน
-app.post("/add-daily-record", async (req, res) => {
-  const { error } = await supabase.from('daily_records').insert(req.body);
-  res.send(error ? "เกิดข้อผิดพลาด" : "✅ บันทึกรายวันออนไลน์สำเร็จ");
-});
-
-// 4. สรุปยอดเงิน (ดึงข้อมูลจาก Cloud)
-app.get("/weekly-summary", async (req, res) => {
-  const { start_date, end_date, branch } = req.query;
-  let query = supabase.from('daily_records').select(`
-    work_days, daily_rate, commission, deduct_absent, deduct_uniform,
-    employees ( emp_id, fullname, bank_account, bank_name, id_card, address )
-  `).gte('date', start_date).lte('date', end_date);
-
-  if (branch && branch !== 'all') query = query.eq('branch', branch);
-
-  const { data, error } = await query;
-  
-  // จัดกลุ่มข้อมูล (Group by Employee)
-  const grouped = {};
-  data.forEach(r => {
-    const id = r.employees.emp_id;
-    if (!grouped[id]) {
-      grouped[id] = { ...r.employees, total_days: 0, total_comm: 0, d_absent: 0, d_uniform: 0, total_income: 0 };
+    if (error || !data) {
+      return res.status(401).json({ success: false, message: "ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง" });
     }
-    grouped[id].total_days += r.work_days;
-    grouped[id].daily_rate = r.daily_rate; // ใช้เรทล่าสุด
-    grouped[id].total_comm += r.commission;
-    grouped[id].d_absent += r.deduct_absent;
-    grouped[id].d_uniform += r.deduct_uniform;
-    grouped[id].total_income += (r.work_days * r.daily_rate) + r.commission;
-  });
-
-  const result = Object.values(grouped).map(r => {
-    const net_before_tax = r.total_income - (r.d_absent + r.d_uniform);
-    const tax = net_before_tax > 1000 ? r.total_income * 0.03 : 0;
-    return { ...r, tax, net_income: net_before_tax - tax };
-  });
-
-  res.json(result);
+    res.json({ success: true, user: { username: data.username } });
+  } catch (err) {
+    res.status(500).json({ success: false, message: "เกิดข้อผิดพลาดที่เซิร์ฟเวอร์" });
+  }
 });
 
-// 5. ดึงข้อมูลรายวันมาโชว์
-app.get("/records-by-date/:date", async (req, res) => {
-  const { data } = await supabase
-    .from('daily_records')
-    .select('id, branch, position, work_days, daily_rate, note, employees(fullname, emp_id)')
-    .eq('date', req.params.date);
-  
-  const formatted = data.map(r => ({
-    id: r.id, branch: r.branch, position: r.position, work_days: r.work_days, daily_rate: r.daily_rate, note: r.note,
-    emp_id: r.employees.emp_id, fullname: r.employees.fullname, total_deduct: 0 // ดึงยอดหักมาโชว์ได้ถ้าต้องการ
-  }));
-  res.json(formatted);
-});
-
-// 6. ลบข้อมูล
-app.delete("/delete-record/:id", async (req, res) => {
-  await supabase.from('daily_records').delete().eq('id', req.params.id);
-  res.send("ลบข้อมูลสำเร็จ");
-});
-// เพิ่มส่วนนี้เข้าไปใน server.js เพื่อดึงรายชื่อพนักงานทั้งหมด
+// --- 3. Employee Management ---
 app.get("/list-employees", async (req, res) => {
   const { data, error } = await supabase
     .from('employees')
     .select('*')
-    .order('created_at', { ascending: false });
-  
-  if (error) {
-    return res.status(500).json([]);
-  }
-  res.json(data);
+    .order('emp_id', { ascending: true });
+  res.json(data || []);
 });
-// ลบพนักงาน
+
+app.post("/save-employee", async (req, res) => {
+  const { error } = await supabase.from('employees').upsert([req.body]);
+  if (error) return res.status(500).send(error.message);
+  res.send("บันทึกสำเร็จ");
+});
+
 app.delete("/delete-employee/:emp_id", async (req, res) => {
-  const { emp_id } = req.params;
-  const { error } = await supabase
-    .from('employees')
-    .delete()
-    .eq('emp_id', emp_id);
-  
-  if (error) return res.status(500).send("ไม่สามารถลบพนักงานได้ (อาจมีข้อมูลบันทึกงานค้างอยู่)");
-  res.send("ลบพนักงานเรียบร้อย");
+  const { error } = await supabase.from('employees').delete().eq('emp_id', req.params.emp_id);
+  if (error) return res.status(500).send("ลบไม่สำเร็จ (อาจมีบันทึกงานค้างอยู่)");
+  res.send("ลบเรียบร้อย");
 });
-app.listen(3000, () => console.log("🚀 Server Online connected to Supabase"));
+
+app.get("/get-employee/:id", async (req, res) => {
+  const { data, error } = await supabase.from('employees').select('fullname').eq('emp_id', req.params.id).single();
+  res.json({ found: !!data, fullname: data ? data.fullname : "" });
+});
+
+// --- 4. Daily Records & Logic (ย้ายการคำนวณมาไว้ที่นี่) ---
+app.post("/add-daily-record", async (req, res) => {
+  try {
+    const { emp_id, date, work_days, daily_rate, commission, deduct_absent, deduct_uniform } = req.body;
+
+    // Validation เบื้องต้น
+    if (!emp_id || !date) return res.status(400).send("กรุณากรอกรหัสพนักงานและวันที่");
+
+    // คำนวณเงินที่ Backend เพื่อความปลอดภัย
+    const total_income = (Number(work_days) * Number(daily_rate)) + Number(commission);
+    const total_deduct = Number(deduct_absent) + Number(deduct_uniform);
+    const tax = total_income * 0.03;
+    const net_income = total_income - total_deduct - tax;
+
+    const { error } = await supabase.from('daily_records').insert([{
+      ...req.body,
+      total_income,
+      total_deduct,
+      tax,
+      net_income
+    }]);
+
+    if (error) throw error;
+    res.send("บันทึกงานรายวันสำเร็จ");
+  } catch (err) {
+    res.status(500).send("เกิดข้อผิดพลาด: " + err.message);
+  }
+});
+
+app.get("/records-by-date/:date", async (req, res) => {
+  const { data, error } = await supabase
+    .from('daily_records')
+    .select(`*, employees(fullname)`)
+    .eq('date', req.params.date);
+  
+  const result = data ? data.map(r => ({
+    ...r,
+    fullname: r.employees ? r.employees.fullname : "ไม่ทราบชื่อ"
+  })) : [];
+  res.json(result);
+});
+
+app.delete("/delete-record/:id", async (req, res) => {
+  await supabase.from('daily_records').delete().eq('id', req.params.id);
+  res.send("ลบแล้ว");
+});
+
+// --- 5. Summary Report ---
+app.get("/weekly-summary", async (req, res) => {
+  const { start_date, end_date, branch } = req.query;
+  let query = supabase
+    .from('daily_records')
+    .select(`*, employees(*)`)
+    .gte('date', start_date)
+    .lte('date', end_date);
+
+  if (branch !== 'all') query = query.eq('branch', branch);
+
+  const { data, error } = await query;
+  if (error) return res.status(500).json([]);
+
+  // จัดกลุ่มข้อมูลพนักงาน
+  const summary = {};
+  data.forEach(r => {
+    const id = r.emp_id;
+    if (!summary[id]) {
+      summary[id] = {
+        emp_id: id,
+        fullname: r.employees?.fullname || "ไม่ทราบชื่อ",
+        bank_name: r.employees?.bank_name || "-",
+        bank_account: r.employees?.bank_account || "-",
+        id_card: r.employees?.id_card || "-",
+        address: r.employees?.address || "-",
+        total_days: 0, daily_rate: r.daily_rate, total_comm: 0,
+        deduct_absent: 0, deduct_uniform: 0, total_income: 0, tax: 0, net_income: 0
+      };
+    }
+    summary[id].total_days += r.work_days;
+    summary[id].total_comm += r.commission;
+    summary[id].deduct_absent += r.deduct_absent;
+    summary[id].deduct_uniform += r.deduct_uniform;
+    summary[id].total_income += r.total_income;
+    summary[id].tax += r.tax;
+    summary[id].net_income += r.net_income;
+  });
+
+  res.json(Object.values(summary));
+});
+
+// Start Server
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => console.log(`Server is running on port ${PORT}`));
