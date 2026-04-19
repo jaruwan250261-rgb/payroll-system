@@ -110,7 +110,7 @@
                     <tr>
                         <th>No.</th><th>รหัส</th><th>ชื่อ-สกุล</th><th>วันทำงาน</th><th>วันละ</th><th>วันที่ทำงาน</th>
                         <th>หักมาสาย</th><th>หักเสื้อ</th><th>ค่าคอมฯ</th><th>รายได้รวม</th><th>ภาษี 3%</th>
-                        <th style="color:var(--accent)">สุทธิ</th><th>เลขบัญชี</th><th>ธนาคาร</th><th>เลขบัตร</th><th>ที่อยู่</th>
+                        <th style="color:var(--accent)">รายได้สุทธิ</th><th>เลขบัญชี</th><th>ธนาคาร</th><th>เลขบัตร</th><th>ที่อยู่</th>
                     </tr>
                 </thead>
                 <tbody id="summary_tbody"></tbody>
@@ -139,6 +139,7 @@
         if(id === 'tab-daily') { if(!document.getElementById('record_date').value) document.getElementById('record_date').valueAsDate = new Date(); loadDaily(); }
     }
 
+    // --- ส่วนจัดการพนักงาน ---
     function loadEmployees() {
         fetch('/api/list-employees').then(res => {
             if(res.status === 401) window.location.href = 'login.html';
@@ -163,6 +164,7 @@
 
     function deleteEmp(id) { if(confirm('ลบพนักงาน?')) fetch(`/api/delete-employee/${id}`,{method:'DELETE'}).then(()=>loadEmployees()); }
 
+    // --- ส่วนบันทึกงานรายวัน ---
     function fetchName() {
         const id = document.getElementById('daily_id').value;
         fetch('/api/get-employee/'+id).then(res=>res.json()).then(data => { document.getElementById('daily_name').value = data.found ? data.fullname : "ไม่พบรหัส"; });
@@ -170,66 +172,7 @@
 
     function saveDaily() {
         const p = { 
-            date:document.getElementById('record_date').value, 
-            emp_id:document.getElementById('daily_id').value, 
-            branch:document.getElementById('daily_branch').value, 
-            work_days:parseFloat(document.getElementById('work_days').value), 
-            daily_rate:parseFloat(document.getElementById('rate').value), 
-            commission:parseFloat(document.getElementById('comm').value), 
-            deduct_absent:parseFloat(document.getElementById('d_absent').value), 
-            deduct_uniform:parseFloat(document.getElementById('d_uniform').value) 
-        };
-        fetch('/api/add-daily-record',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(p)}).then(res => {
-            if(res.ok) { loadDaily(); alert("บันทึกงานสำเร็จ"); }
-            else alert("บันทึกไม่สำเร็จ ตรวจสอบข้อมูลอีกครั้ง");
-        });
-    }
-
-    function loadDaily() {
-        fetch('/api/records-by-date/'+document.getElementById('record_date').value).then(res=>res.json()).then(data => {
-            const b = document.getElementById('daily_tbody'); b.innerHTML = '';
-            data.forEach(r => b.innerHTML += `<tr><td>${r.emp_id}</td><td>${r.fullname}</td><td>${r.daily_rate}</td><td>${r.work_days}</td><td>${r.commission || 0}</td><td>${r.deduct_absent || 0}</td><td>${r.deduct_uniform || 0}</td><td>${r.total_income}</td><td class="text-right"><button class="btn-del-mini" onclick="delRec(${r.id})">ลบ</button></td></tr>`);
-        });
-    }
-
-    function delRec(id) { if(confirm('ลบรายการ?')) fetch('/api/delete-record/'+id,{method:'DELETE'}).then(()=>loadDaily()); }
-
-    function loadSummary() {
-        const s = document.getElementById('s_date').value, e = document.getElementById('e_date').value, br = document.getElementById('sum_branch').value;
-        if(!s || !e) return alert("เลือกช่วงวันที่");
-        fetch(`/api/raw-records?start_date=${s}&end_date=${e}&branch=${br}`).then(res=>res.json()).then(data => {
-            const b = document.getElementById('summary_tbody'); b.innerHTML = '';
-            data.forEach((r, i) => {
-                const tax = r.total_income * 0.03;
-                const net = r.total_income - tax;
-                b.innerHTML += `<tr>
-                    <td>${i+1}</td><td>${r.emp_id}</td><td>${r.fullname}</td><td class="text-center">${r.work_days}</td>
-                    <td class="text-right">${r.daily_rate.toLocaleString()}</td><td class="text-center">${r.date}</td>
-                    <td class="text-right">${(r.deduct_absent || 0).toLocaleString()}</td><td class="text-right">${(r.deduct_uniform || 0).toLocaleString()}</td>
-                    <td class="text-right">${(r.commission || 0).toLocaleString()}</td><td class="text-right">${r.total_income.toLocaleString()}</td>
-                    <td class="text-right">${tax.toLocaleString(undefined,{minimumFractionDigits:2})}</td>
-                    <td class="text-right" style="color:#4CAF50; font-weight:bold">${net.toLocaleString(undefined,{minimumFractionDigits:2})}</td>
-                    <td>${r.bank_account}</td><td>${r.bank_name}</td><td>${r.id_card}</td><td>${r.address || '-'}</td>
-                </tr>`;
-            });
-        });
-    }
-
-    function exportExcel() {
-        const table = document.getElementById("summary_table");
-        let csv = ["\ufeff"];
-        for(let row of table.rows) {
-            let r = [];
-            for(let col of row.cells) r.push('"' + col.innerText.replace(/,/g,'') + '"');
-            csv.push(r.join(","));
-        }
-        const blob = new Blob([csv.join("\n")], {type:'text/csv;charset=utf-8'});
-        const a = document.createElement("a");
-        a.href = URL.createObjectURL(blob);
-        a.download = `สรุปยอดเงิน_${document.getElementById('s_date').value}.csv`;
-        a.click();
-    }
-    window.onload = () => { if (localStorage.getItem('isLoggedIn') === 'true') loadEmployees(); };
-</script>
-</body>
-</html>
+            date: document.getElementById('record_date').value, 
+            emp_id: document.getElementById('daily_id').value, 
+            branch: document.getElementById('daily_branch').value, 
+            position: document.
