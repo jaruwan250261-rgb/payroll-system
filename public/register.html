@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>สมัครสมาชิก - ระบบทำจ่าย</title>
+    <style>
+        body { font-family: sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; background: #f0f2f5; }
+        .register-container { background: white; padding: 2rem; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); width: 300px; }
+        input { width: 100%; padding: 10px; margin: 10px 0; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; }
+        button { width: 100%; padding: 10px; background: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer; }
+        button:hover { background: #218838; }
+        .link { text-align: center; margin-top: 15px; font-size: 14px; }
+    </style>
+</head>
+<body>
+    <div class="register-container">
+        <h2>สร้างบัญชีใหม่</h2>
+        <input type="text" id="username" placeholder="ชื่อผู้ใช้ (Username)" required>
+        <input type="password" id="password" placeholder="รหัสผ่าน (Password)" required>
+        <button onclick="handleRegister()">สมัครสมาชิก</button>
+        <div class="link"><a href="login.html">มีบัญชีแล้ว? เข้าสู่ระบบ</a></div>
+    </div>
+
+    <script>
+        async function handleRegister() {
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+
+            const res = await fetch('/api/register', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, password })
+            });
+
+            const data = await res.json();
+            if (data.success) {
+                alert('สมัครสมาชิกสำเร็จ! กำลังไปหน้า Login');
+                window.location.href = 'login.html';
+            } else {
+                alert('เกิดข้อผิดพลาด: ' + data.message);
+            }
+        }
+    </script>
+</body>
+</html>
