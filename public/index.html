@@ -163,11 +163,16 @@
         if(id === 'tab-daily') { if(!document.getElementById('record_date').value) document.getElementById('record_date').valueAsDate = new Date(); loadDaily(); }
     }
 
+    // 🟢 โหลดข้อมูลพนักงาน
     function loadEmployees() {
         fetch('/api/list-employees').then(res => {
-            if(res.status === 401) window.location.href = 'login.html';
+            if(res.status === 401) {
+                window.location.href = 'login.html';
+                return;
+            }
             return res.json();
         }).then(data => {
+            if(!data) return;
             data.sort((a,b) => a.emp_id.localeCompare(b.emp_id, undefined, {numeric:true}));
             employeesData = data;
             const b = document.getElementById('emp_tbody'); b.innerHTML = '';
@@ -192,6 +197,7 @@
         fetch('/api/get-employee/'+id).then(res=>res.json()).then(data => { document.getElementById('daily_name').value = data.found ? data.fullname : "ไม่พบรหัส"; });
     }
 
+    // 🟡 บันทึกรายวัน
     function saveDaily() {
         const p = { 
             date: document.getElementById('record_date').value, 
@@ -232,6 +238,7 @@
 
     function delRec(id) { if(confirm('ลบรายการ?')) fetch('/api/delete-record/'+id,{method:'DELETE'}).then(()=>loadDaily()); }
 
+    // 🔵 สรุปยอดเงิน
     function loadSummary() {
         const s = document.getElementById('s_date').value, e = document.getElementById('e_date').value, br = document.getElementById('sum_branch').value;
         if(!s || !e) return alert("เลือกช่วงวันที่ก่อน");
