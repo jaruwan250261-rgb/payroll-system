@@ -118,6 +118,14 @@ app.get("/api/records-by-date/:date", checkAuth, async (req, res) => {
         return res.status(500).json({ error: error.message });
     }
     
+    // บังคับให้เป็น Array เสมอ เพื่อให้หน้าบ้านใช้ .forEach ได้ไม่พัง
+    const formatted = (data || []).map(r => ({
+        ...r,
+        fullname: r.employees?.fullname || 'ไม่ทราบชื่อ'
+    }));
+    res.json(formatted);
+});
+    
     // ตรวจสอบว่าถ้าไม่มีข้อมูล ให้ส่ง array ว่างกลับไป ไม่ส่ง null
     const formatted = (data || []).map(r => ({
         ...r,
