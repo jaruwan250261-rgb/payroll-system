@@ -108,12 +108,21 @@ app.post("/api/add-daily-record", checkAuth, async (req, res) => {
 });
 
 app.get("/api/records-by-date/:date", checkAuth, async (req, res) => {
-    const { data, error } = await supabase.from("daily_records")
+    const { data, error } = await supabase
+        .from("daily_records")
         .select(`*, employees(fullname)`)
         .eq("date", req.params.date);
+
+    if (error) {
+        console.error("Fetch Error:", error);
+        return res.status(500).json({ error: error.message });
+    }
     
-    if (error) return res.status(500).json({ error: error.message });
-    const formatted = data.map(r => ({ ...r, fullname: r.employees?.fullname }));
+    // ตรวจสอบว่าถ้าไม่มีข้อมูล ให้ส่ง array ว่างกลับไป ไม่ส่ง null
+    const formatted = (data || []).map(r => ({
+        ...r,
+        fullname: r.employees?.fullname || 'ไม่ทราบชื่อ'
+    }));
     res.json(formatted);
 });
 
